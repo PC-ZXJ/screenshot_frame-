@@ -1,0 +1,1019 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>截图套壳</title>
+<style>
+:root{
+  --bg:#f5f6fb; --surface:#ffffff; --tonal:#eceff8; --ink:#181b23; --muted:#596175; --line:#dde1ec;
+  --primary:#3558d6; --on-primary:#ffffff; --primary-c:#dde4ff; --on-primary-c:#10206b;
+  --ok:#17784c; --ok-c:#d5f1e2; --warn:#97480a; --warn-c:#ffe7d0; --stage:#e8ecf5; color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0e1117; --surface:#171b24; --tonal:#212736; --ink:#e7eaf3; --muted:#9ba4b8; --line:#2a3244;
+    --primary:#aec3ff; --on-primary:#0e1d5a; --primary-c:#2b3e86; --on-primary-c:#dde4ff;
+    --ok:#74d9a5; --ok-c:#17402c; --warn:#f2b673; --warn-c:#4b2c0d; --stage:#0a0d13; color-scheme:dark;
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.5 system-ui,-apple-system,"Noto Sans CJK SC","PingFang SC","Microsoft YaHei",sans-serif;
+  padding:env(safe-area-inset-top,0) 0 calc(96px + env(safe-area-inset-bottom,0))}
+p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+.muted{color:var(--muted)} .small{font-size:13px}
+.ic{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ic.sm{width:18px;height:18px} .ic.fill{fill:currentColor;stroke:none}
+.wrap{max-width:560px;margin:0 auto;padding:0 16px}
+
+/* top bar */
+.appbar{display:flex;align-items:center;justify-content:space-between;padding:14px 4px 10px 6px;min-height:68px}
+.appbar h1{font-size:28px;line-height:1.2;font-weight:500;margin:0;letter-spacing:.01em}
+.iconbtn{width:48px;height:48px;border-radius:50%;border:0;background:none;display:flex;align-items:center;justify-content:center}
+.iconbtn:active{background:var(--tonal)}
+.menuwrap{position:relative}
+.menu{position:absolute;right:0;top:50px;min-width:168px;background:var(--surface);border-radius:16px;padding:6px;z-index:30;
+  box-shadow:0 6px 24px rgba(0,0,0,.18);border:1px solid var(--line)}
+.menu button{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;background:none;height:48px;padding:0 14px;border-radius:12px}
+.menu button:active{background:var(--tonal)}
+.banner{background:var(--warn-c);color:var(--warn);border-radius:16px;padding:12px 14px;margin:0 0 12px;font-size:14px}
+
+/* pages */
+.page{display:none}
+.page.active{display:block;animation:pageIn .24s ease both}
+@keyframes pageIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* cards */
+.card{background:var(--surface);border-radius:24px;padding:18px;margin:0 0 12px}
+.card-h{font-size:16px;font-weight:600;margin:0 0 4px}
+.card-s{font-size:13px;color:var(--muted);margin:0 0 12px}
+.hero{display:flex;align-items:center;gap:14px;background:var(--primary-c);color:var(--on-primary-c);border-radius:28px;padding:18px 18px 18px 20px;margin:0 0 10px;transition:background .2s,opacity .2s}
+.hero.off{background:var(--tonal);color:var(--muted)}
+.hero-ic{width:48px;height:48px;border-radius:16px;background:var(--surface);display:flex;align-items:center;justify-content:center;color:var(--primary)}
+.hero.off .hero-ic{color:var(--muted)}
+.hero-tx{flex:1;min-width:0}
+.hero-t{font-size:18px;font-weight:600}
+.hero-d{font-size:13px;opacity:.85}
+.status{display:inline-flex;align-items:center;gap:6px;font-size:13px;padding:5px 12px;border-radius:999px;background:var(--tonal);color:var(--muted);margin:0 0 12px}
+.status::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
+.status.ok{background:var(--ok-c);color:var(--ok)} .status.bad{background:var(--warn-c);color:var(--warn)}
+
+/* switch */
+.switch{width:56px;height:32px;border-radius:16px;border:2px solid var(--muted);background:transparent;position:relative;padding:0;flex:none;transition:background .18s,border-color .18s}
+.switch::after{content:"";position:absolute;top:50%;left:6px;width:16px;height:16px;margin-top:-8px;border-radius:50%;background:var(--muted);transition:left .18s,width .18s,height .18s,margin-top .18s,background .18s}
+.switch[aria-checked="true"]{background:var(--primary);border-color:var(--primary)}
+.switch[aria-checked="true"]::after{left:28px;width:24px;height:24px;margin-top:-12px;background:var(--on-primary)}
+
+/* list rows */
+.list-card{padding:6px 6px}
+.lrow{display:flex;align-items:center;gap:14px;width:100%;text-align:left;border:0;background:none;padding:12px 14px;border-radius:18px;min-height:60px}
+button.lrow:active{background:var(--tonal)}
+.lrow .li{width:40px;height:40px;border-radius:14px;background:var(--tonal);display:flex;align-items:center;justify-content:center;color:var(--primary)}
+.lrow .lt{flex:1;min-width:0}
+.lrow .ll{font-size:13px;color:var(--muted)}
+.lrow .lv{font-size:15px;overflow-wrap:anywhere}
+.lrow .lc{color:var(--muted)}
+.recent-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.recent-row:first-of-type{border-top:0}
+.recent-row .rn{flex:1;min-width:0}
+.recent-row .rname{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.recent-row .rtime{font-size:12px;color:var(--muted)}
+.pill{font-size:12px;padding:3px 10px;border-radius:999px;white-space:nowrap;background:var(--tonal);color:var(--muted)}
+.pill.ok{background:var(--ok-c);color:var(--ok)} .pill.bad{background:var(--warn-c);color:var(--warn)}
+
+/* empty state */
+.empty{text-align:center;padding:26px 18px}
+.empty svg.big{width:72px;height:72px;color:var(--primary);margin:0 auto 8px;display:block;stroke-width:1.4}
+.empty .et{font-size:17px;font-weight:600;margin-bottom:4px}
+.empty .ed{font-size:14px;color:var(--muted);margin:0 auto 16px;max-width:300px}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 20px;border-radius:999px;border:0;background:var(--tonal);color:var(--ink);font-weight:500}
+.btn:active{filter:brightness(.95)} .btn:disabled{opacity:.45}
+.btn.fill{background:var(--primary);color:var(--on-primary)}
+.btn.text{background:none;color:var(--primary);padding:0 12px}
+.btn.danger{color:var(--warn)}
+.btn.dangerline{background:transparent;color:var(--warn);box-shadow:inset 0 0 0 1.5px var(--warn)}
+.btn.dangerline:active{background:var(--warn-c);filter:none}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+/* chips */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 18px;border-radius:999px;border:1px solid var(--line);background:var(--surface);
+  transition:background .18s,border-color .18s,color .18s,transform .12s}
+.chip:active{transform:scale(.97)}
+.chip.profile{animation:chipIn .2s ease both}
+@keyframes chipIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}
+.chip[aria-pressed="true"]{background:var(--primary-c);border-color:transparent;color:var(--on-primary-c);font-weight:600}
+.chip.add{border-style:dashed;color:var(--muted)}
+.chip.add .ic{transition:transform .26s cubic-bezier(.2,.8,.2,1)}
+.chip.add[aria-expanded="true"]{border-style:solid;border-color:transparent;background:var(--primary-c);color:var(--on-primary-c)}
+.chip.add[aria-expanded="true"] .ic{transform:rotate(45deg)}
+
+/* collapse */
+.collapse{display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows .3s cubic-bezier(.2,.8,.2,1),opacity .22s ease}
+.collapse.open{grid-template-rows:1fr;opacity:1}
+.collapse>.inner{overflow:hidden;min-height:0}
+.sub{margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.chev{display:inline-flex;transition:transform .26s cubic-bezier(.2,.8,.2,1)}
+[aria-expanded="true"]>.chev{transform:rotate(90deg)}
+.list{display:flex;flex-direction:column}
+.item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.item:first-child{border-top:0}
+.item .nm{overflow-wrap:anywhere}
+.item .meta{display:block;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+/* calibration */
+.stage{background:var(--stage);border-radius:20px;padding:14px;margin:4px 0 14px;display:flex;justify-content:center}
+.stage canvas{display:block;width:100%;max-width:300px;height:auto;border-radius:6px;
+  background-image:linear-gradient(45deg,rgba(128,128,128,.16) 25%,transparent 25%,transparent 75%,rgba(128,128,128,.16) 75%),
+  linear-gradient(45deg,rgba(128,128,128,.16) 25%,transparent 25%,transparent 75%,rgba(128,128,128,.16) 75%);
+  background-size:16px 16px;background-position:0 0,8px 8px}
+.readout{display:flex;gap:10px;margin-bottom:8px}
+.readout>div{flex:1;background:var(--tonal);border-radius:16px;padding:8px 14px;font-variant-numeric:tabular-nums}
+.readout .k{font-size:12px;color:var(--muted)} .readout b{display:block;font-size:20px;font-weight:600}
+.nudge{display:grid;grid-template-columns:48px 1fr 48px;gap:8px;align-items:center;margin-bottom:6px}
+.nudge .lbl{grid-column:1/-1;font-size:13px;color:var(--muted);margin-bottom:-2px}
+.step{height:48px;border-radius:50%;border:0;background:var(--tonal);font-size:22px;line-height:1}
+.step:active{filter:brightness(.93)}
+input[type=range]{width:100%;accent-color:var(--primary);height:36px}
+input[type=text]{width:100%;height:48px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:14px;padding:0 12px;margin-top:8px}
+.dirrow{display:block;width:100%;text-align:left;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:14px;padding:10px 14px;margin-top:8px;font:inherit;cursor:pointer}
+.dirrow[aria-pressed="true"]{background:var(--primary-c);border-color:transparent;color:var(--on-primary-c)}
+.dirrow .dp{display:block;font-size:14px;word-break:break-all}
+.dirrow .dm{display:block;font-size:12px;color:var(--muted)}
+.dirrow[aria-pressed="true"] .dm{color:inherit;opacity:.8}
+input[type=number]{width:104px;height:48px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;padding:0 12px;font-variant-numeric:tabular-nums}
+.check{display:flex;gap:10px;align-items:center;font-size:14px;margin-top:6px;min-height:44px}
+.check input{width:20px;height:20px;accent-color:var(--primary)}
+.warn{color:var(--warn);font-size:13px;margin-top:6px}
+
+/* segmented */
+.seg{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;margin:6px 0 6px}
+.seg button{flex:1;border:0;background:transparent;min-height:44px;padding:0 8px;display:flex;align-items:center;justify-content:center;gap:6px;border-right:1px solid var(--line);transition:background .18s}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--primary-c);color:var(--on-primary-c);font-weight:600}
+.field-t{font-size:15px;font-weight:500;margin-top:14px}
+.field-t:first-of-type{margin-top:4px}
+.field-d{font-size:13px;color:var(--muted);margin-bottom:2px}
+
+/* save bar + nav */
+.bar{position:fixed;left:12px;right:12px;bottom:calc(84px + env(safe-area-inset-bottom,0));max-width:536px;margin:0 auto;z-index:15;
+  display:flex;align-items:center;gap:12px;padding:10px 10px 10px 20px;border-radius:20px;background:var(--ink);color:var(--bg);
+  box-shadow:0 6px 24px rgba(0,0,0,.25);opacity:0;transform:translateY(16px);visibility:hidden;transition:opacity .2s,transform .24s cubic-bezier(.2,.8,.2,1),visibility 0s linear .24s}
+.bar.show{opacity:1;transform:none;visibility:visible;transition:opacity .2s,transform .24s cubic-bezier(.2,.8,.2,1)}
+.bar span{flex:1;font-size:14px}
+.bar .btn{background:var(--primary-c);color:var(--on-primary-c);height:40px}
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:10;display:flex;justify-content:center;background:var(--surface);
+  padding:8px 8px calc(10px + env(safe-area-inset-bottom,0));border-top:1px solid var(--line)}
+.nav-in{display:flex;width:100%;max-width:560px;justify-content:space-around}
+.nav button{flex:1;border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;color:var(--muted);padding:0;min-height:56px}
+.nav .pillbg{width:64px;height:32px;border-radius:16px;display:flex;align-items:center;justify-content:center;transition:background .2s}
+.nav button[aria-current="page"]{color:var(--ink);font-weight:600}
+.nav button[aria-current="page"] .pillbg{background:var(--primary-c);color:var(--on-primary-c)}
+
+/* toast + dialog + overlays */
+.toast{position:fixed;left:50%;bottom:calc(150px + env(safe-area-inset-bottom,0));transform:translateX(-50%);background:var(--ink);color:var(--bg);
+  padding:10px 18px;border-radius:14px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90%;z-index:50;text-align:center}
+.toast.show{opacity:1}
+.scrim{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(8,12,18,.55);opacity:0;visibility:hidden;transition:opacity .2s ease,visibility 0s linear .2s}
+.scrim.open{opacity:1;visibility:visible;transition:opacity .2s ease}
+.dialog{width:min(340px,calc(100% - 48px));background:var(--surface);border-radius:28px;padding:24px 22px 16px;transform:translateY(14px) scale(.96);opacity:0;transition:transform .24s cubic-bezier(.2,.8,.2,1),opacity .2s ease}
+.scrim.open .dialog{transform:none;opacity:1}
+.dialog h2{margin:0 0 8px;font-size:20px;font-weight:500}
+.dlg-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}
+.btn.warnfill{background:var(--warn);color:var(--on-primary)}
+.overlay{position:fixed;inset:0;background:var(--bg);overflow:auto;z-index:40;padding:env(safe-area-inset-top,0) 0 calc(24px + env(safe-area-inset-bottom,0))}
+.overlay-bar{position:sticky;top:0;background:var(--bg);display:flex;align-items:center;gap:4px;padding:8px 8px;z-index:2}
+.overlay-bar h2{margin:0;font-size:20px;font-weight:500;flex:1}
+.overlay .ob{max-width:560px;margin:0 auto;padding:4px 16px}
+.about-title{font-size:26px;font-weight:500;margin:0}
+.about-ver{font-size:13px;color:var(--muted);margin:2px 0 14px;font-variant-numeric:tabular-nums}
+.about ul{margin:6px 0 0;padding-left:20px} .about li{margin:5px 0}
+.about dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:10px 16px}
+.about dt{color:var(--muted);font-size:13px} .about dd{margin:0;overflow-wrap:anywhere}
+pre.log{margin:0;background:var(--surface);border-radius:20px;padding:14px;font:12px/1.55 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--ink)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11.5 12 4.5l8 7"/><path d="M6 10v9.5h4.5V14h3v5.5H18V10"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="2.8" width="10" height="18.4" rx="2.6"/><path d="M10.5 18h3"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></symbol>
+  <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="12" cy="5.5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="18.5" r="1.5"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M14.5 6 8.5 12l6 6"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9.5 6l6 6-6 6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4.5 7h15M9.5 7V5h5v2M6.5 7l.8 12h9.4l.8-12M10 11v5M14 11v5"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 3 5.5 13.5H11L10 21l7.5-10.5H12z"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M4 7.5A1.5 1.5 0 0 1 5.5 6H10l2 2.2h6.5A1.5 1.5 0 0 1 20 9.7V17a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/></symbol>
+  <symbol id="i-res" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="2.5"/><path d="M8 9.5V8h2M16 14.5V16h-2"/></symbol>
+  <symbol id="i-log" viewBox="0 0 24 24"><path d="M7 3.5h7l4 4V20.5H7z"/><path d="M14 3.5v4h4M9.5 12h5M9.5 15.5h5"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8v.1"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><rect x="5" y="3.5" width="14" height="17" rx="3"/><circle cx="12" cy="12" r="2.2"/></symbol>
+</svg>
+
+<div id="main">
+  <div class="wrap">
+    <header class="appbar">
+      <h1 id="pageTitle">截图套壳</h1>
+      <div class="menuwrap">
+        <button class="iconbtn" id="menuBtn" aria-haspopup="menu" aria-expanded="false" aria-label="更多选项"><svg class="ic fill"><use href="#i-dots"/></svg></button>
+        <div class="menu" id="menu" role="menu" hidden>
+          <button role="menuitem" id="menuLog"><svg class="ic"><use href="#i-log"/></svg>运行日志</button>
+          <button role="menuitem" id="menuAbout"><svg class="ic"><use href="#i-info"/></svg>关于</button>
+        </div>
+      </div>
+    </header>
+    <div class="banner" id="banner" hidden></div>
+
+    <!-- 概览 -->
+    <section class="page active" id="page-home" aria-label="概览">
+      <div class="hero" id="hero">
+        <div class="hero-ic"><svg class="ic"><use href="#i-bolt"/></svg></div>
+        <div class="hero-tx"><div class="hero-t">自动套壳</div><div class="hero-d" id="heroDesc">正在读取…</div></div>
+        <button class="switch" id="enabled" role="switch" aria-checked="false" aria-label="自动套壳"></button>
+      </div>
+      <div><span class="status" id="status">正在读取状态…</span></div>
+      <div class="card empty" id="homeEmpty" hidden>
+        <svg class="ic big"><use href="#i-phone"/></svg>
+        <div class="et">还没有壳图</div>
+        <p class="ed">添加一张机型壳图后，新的全屏截图就会自动套壳。</p>
+        <button class="btn fill" id="homeAdd"><svg class="ic sm"><use href="#i-plus"/></svg>添加壳图</button>
+      </div>
+      <div class="card list-card">
+        <button class="lrow" data-goto="frames"><span class="li"><svg class="ic"><use href="#i-phone"/></svg></span><span class="lt"><span class="ll">当前壳图</span><div class="lv" id="sumFrame">—</div></span><svg class="ic sm lc"><use href="#i-chev"/></svg></button>
+        <button class="lrow" data-goto="frames"><span class="li"><svg class="ic"><use href="#i-target"/></svg></span><span class="lt"><span class="ll">匹配分辨率</span><div class="lv" id="sumMatch">—</div></span><svg class="ic sm lc"><use href="#i-chev"/></svg></button>
+        <div class="lrow"><span class="li"><svg class="ic"><use href="#i-folder"/></svg></span><span class="lt"><span class="ll">截图文件夹</span><div class="lv" id="sumDir">—</div></span></div>
+        <button class="lrow" data-goto="settings"><span class="li"><svg class="ic"><use href="#i-res"/></svg></span><span class="lt"><span class="ll">输出方式</span><div class="lv" id="sumRes">—</div></span><svg class="ic sm lc"><use href="#i-chev"/></svg></button>
+      </div>
+      <div class="card">
+        <div class="card-h">最近处理</div>
+        <div id="recent"></div>
+      </div>
+    </section>
+
+    <!-- 壳图 -->
+    <section class="page" id="page-frames" aria-label="壳图">
+      <div class="card">
+        <div class="chips" id="chips">
+          <button class="chip add" id="addChip" aria-expanded="false" aria-controls="addWrap"><svg class="ic sm"><use href="#i-plus"/></svg>添加壳图</button>
+        </div>
+        <div class="collapse" id="addWrap" inert><div class="inner">
+          <div class="sub" id="addPanel">
+            <p class="small muted">请选择一张 PNG 壳图，其屏幕区域必须是透明的。文件会自动导入模块目录，无需手动创建文件夹。</p>
+            <div class="row" style="margin:12px 0 6px"><button class="btn fill" id="pickBtn">从文件管理器选择</button></div>
+            <p class="small muted">若点击后没有弹出系统文件管理器，说明当前管理器不支持该功能，请改用下方的“浏览文件夹”。</p>
+            <div class="row" style="margin-top:10px"><button class="btn" id="brToggle" aria-expanded="false" aria-controls="brWrap">浏览文件夹<span class="chev" aria-hidden="true"><svg class="ic sm"><use href="#i-chev"/></svg></span></button></div>
+            <div class="collapse" id="brWrap" inert><div class="inner"><div id="brBody" style="padding-top:10px"></div></div></div>
+            <div id="freshBody"></div>
+          </div>
+        </div></div>
+      </div>
+
+      <div class="card empty" id="framesEmpty" hidden>
+        <svg class="ic big"><use href="#i-phone"/></svg>
+        <div class="et">还没有壳图</div>
+        <p class="ed">点击上方的“添加壳图”，选择你机型的壳图 PNG。屏幕区域会被自动识别。</p>
+      </div>
+
+      <section class="card" id="calCard" hidden>
+        <div class="card-h">屏幕区域校准</div>
+        <p class="card-s">拖动滑块或点按 − / + 微调，单位为壳图像素。修改后需要保存才会生效。</p>
+        <div class="stage"><canvas id="cv" width="10" height="10"></canvas></div>
+        <div class="readout">
+          <div><span class="k">水平偏移</span><b id="rx">0 px</b></div>
+          <div><span class="k">垂直偏移</span><b id="ry">0 px</b></div>
+        </div>
+        <div class="nudge">
+          <span class="lbl">水平（负值向左）</span>
+          <button class="step" data-axis="dx" data-d="-1" aria-label="向左 1 像素">−</button>
+          <input type="range" id="sx" min="-60" max="60" step="1" value="0" aria-label="水平偏移">
+          <button class="step" data-axis="dx" data-d="1" aria-label="向右 1 像素">+</button>
+        </div>
+        <div class="nudge">
+          <span class="lbl">垂直（负值向上）</span>
+          <button class="step" data-axis="dy" data-d="-1" aria-label="向上 1 像素">−</button>
+          <input type="range" id="sy" min="-60" max="60" step="1" value="0" aria-label="垂直偏移">
+          <button class="step" data-axis="dy" data-d="1" aria-label="向下 1 像素">+</button>
+        </div>
+        <label class="check"><input type="checkbox" id="guides"> 显示自动检测的屏幕边界</label>
+        <p class="small muted" id="detectInfo" style="margin-top:6px"></p>
+        <p class="warn" id="detectWarn" hidden></p>
+        <div class="row" style="margin-top:12px">
+          <button class="btn" id="reset">重置偏移</button>
+          <button class="btn dangerline" id="del"><svg class="ic sm"><use href="#i-trash"/></svg>删除此壳图</button>
+        </div>
+      </section>
+
+      <section class="card" id="matchCard" hidden>
+        <div class="card-h">自动匹配规则</div>
+        <p class="card-s">截图分辨率与下列尺寸一致（横屏同样适用）时，使用这套壳图。不一致的截图会被跳过。</p>
+        <div class="row">
+          <input type="number" id="rw" inputmode="numeric" min="1" aria-label="宽度">
+          <span class="muted">×</span>
+          <input type="number" id="rh" inputmode="numeric" min="1" aria-label="高度">
+        </div>
+        <div class="row" style="margin-top:10px"><button class="btn" id="devSize">使用本机分辨率</button></div>
+      </section>
+    </section>
+
+    <!-- 设置 -->
+    <section class="page" id="page-settings" aria-label="设置">
+      <div class="card">
+        <div class="card-h">截图文件夹</div>
+        <p class="card-s">模块监听此文件夹里的新截图。不同品牌的系统保存位置不同，可自动检测或手动填写。</p>
+        <div class="chips" id="dirPresets"></div>
+        <input type="text" id="wdir" autocapitalize="off" autocomplete="off" spellcheck="false" aria-label="截图文件夹路径" placeholder="/sdcard/Pictures/Screenshots">
+        <div class="row" style="margin-top:10px"><button class="btn" id="dirScan">自动检测</button></div>
+        <div id="dirFound"></div>
+      </div>
+      <div class="card">
+        <div class="card-h">输出设置</div>
+        <p class="card-s">这些设置对所有壳图生效，修改后需要保存。</p>
+        <div class="field-t">输出分辨率</div>
+        <div class="field-d">“原始分辨率”保持截图像素 1:1，壳图按需放大；“壳图尺寸”按壳图 PNG 的尺寸输出，截图会被缩放。</div>
+        <div class="seg" id="segRes"></div>
+        <div class="field-t">宽高比不一致时</div>
+        <div class="field-d">仅当截图与壳图屏幕区域的宽高比不一致时才有区别。</div>
+        <div class="seg" id="segMode"></div>
+        <div class="field-t">横屏截图的壳图方向</div>
+        <div class="field-d">横屏截图时壳图旋转 90°。逆时针时，摄像头在左侧。</div>
+        <div class="seg" id="segRot"></div>
+      </div>
+      <div class="card list-card">
+        <button class="lrow" id="rowLog"><span class="li"><svg class="ic"><use href="#i-log"/></svg></span><span class="lt"><div class="lv">运行日志</div><span class="ll">查看最近的处理记录与错误</span></span><svg class="ic sm lc"><use href="#i-chev"/></svg></button>
+        <button class="lrow" id="rowAbout"><span class="li"><svg class="ic"><use href="#i-info"/></svg></span><span class="lt"><div class="lv">关于</div><span class="ll" id="verLine">截图套壳</span></span><svg class="ic sm lc"><use href="#i-chev"/></svg></button>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="bar" id="bar" role="region" aria-label="保存更改"><span id="dirtyState">存在未保存的更改</span><button class="btn" id="save" disabled>保存</button></div>
+<nav class="nav" id="nav" aria-label="主导航"><div class="nav-in">
+  <button data-tab="home" aria-current="page"><span class="pillbg"><svg class="ic"><use href="#i-home"/></svg></span>概览</button>
+  <button data-tab="frames"><span class="pillbg"><svg class="ic"><use href="#i-phone"/></svg></span>壳图</button>
+  <button data-tab="settings"><span class="pillbg"><svg class="ic"><use href="#i-sliders"/></svg></span>设置</button>
+</div></nav>
+<div class="toast" id="toast" role="status"></div>
+
+<div class="scrim" id="scrim" aria-hidden="true">
+  <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="dlgTitle" aria-describedby="dlgBody">
+    <h2 id="dlgTitle"></h2>
+    <p class="small muted" id="dlgBody"></p>
+    <div class="dlg-actions">
+      <button class="btn text" id="dlgCancel">取消</button>
+      <button class="btn warnfill" id="dlgOk">删除</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="logPage" hidden role="dialog" aria-label="运行日志">
+  <div class="overlay-bar"><button class="iconbtn" id="logBack" aria-label="返回"><svg class="ic"><use href="#i-back"/></svg></button><h2>运行日志</h2><button class="btn text" id="logRefresh">刷新</button></div>
+  <div class="ob"><pre class="log" id="logText"></pre></div>
+</div>
+
+<div class="overlay about" id="about" hidden role="dialog" aria-label="关于">
+  <div class="overlay-bar"><button class="iconbtn" id="aboutBack" aria-label="返回"><svg class="ic"><use href="#i-back"/></svg></button><h2>关于</h2></div>
+  <div class="ob">
+    <h3 class="about-title">截图套壳</h3>
+    <div class="about-ver" id="abVer">Screenshot Framer</div>
+    <p>自动监听系统截图，为全屏截图套上设备外壳，并以原文件名在原位置保存。支持 PNG 和 JPG 截图。</p>
+
+    <section class="card" style="margin-top:16px">
+      <div class="card-h">主要功能</div>
+      <ul>
+        <li>自动监听截图文件夹，截图后数秒内完成套壳并原位替换。</li>
+        <li>截图文件夹可自动检测或自定义，适配不同品牌的系统，修改后立即生效。</li>
+        <li>PNG 截图无损输出：截图像素 1:1 保留，不重新压缩；也可在设置中改为按壳图尺寸输出。</li>
+        <li>自动识别壳图的屏幕区域（含圆角与挖孔），更换机型无需手动测量。</li>
+        <li>JPG 截图套壳后以最高画质重新保存（JPG 本身有损），壳图外的透明区域填白。</li>
+        <li>仅处理全屏截图；区域截图、长截图等尺寸不符的会自动跳过。</li>
+        <li>支持横屏截图，自动旋转壳图。</li>
+        <li>支持多套壳图，按截图分辨率自动匹配。</li>
+        <li>可视化校准，支持 1 像素级偏移微调。</li>
+        <li>壳图在界面内导入，模块自动保存，无需手动创建文件夹。</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <div class="card-h">使用须知</div>
+      <ul>
+        <li>套壳会直接替换原截图，原图无法恢复。</li>
+        <li>需要 root 权限，设备架构为 arm64。</li>
+        <li>支持的管理器：KernelSU 及其衍生版（如 KernelSU Next、SukiSU Ultra）、APatch，可直接在管理器中打开本界面；Magisk 自身没有模块界面，需借助 MMRL 等支持 WebUI 的工具打开。目前仅在 KernelSU 上测试，其他管理器未逐一验证。</li>
+        <li>模块不自带壳图，请自备你机型的壳图：PNG 格式，屏幕区域透明，且被边框完全包围。</li>
+        <li>修改设置后，请点击底部的“保存”。</li>
+        <li>升级模块会保留设置和壳图。卸载模块不会自动清理数据目录，如需彻底清除，请手动删除 /data/adb/screenshot_frame。</li>
+        <li>套壳没有反应时，先查看“运行日志”；监听服务异常时，请重启手机。</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <div class="card-h">信息</div>
+      <dl>
+        <dt>作者</dt><dd>酷安_@裤子里又硬又烫原来是我的手机</dd>
+        <dt>版本</dt><dd id="abVer2">—</dd>
+        <dt>数据目录</dt><dd>/data/adb/screenshot_frame</dd>
+        <dt>运行日志</dt><dd>/data/adb/screenshot_frame/log.txt</dd>
+        <dt>第三方组件</dt><dd>LodePNG（zlib 许可）：PNG 编解码；stb_image、stb_image_write（公有领域）：JPG 编解码</dd>
+      </dl>
+    </section>
+  </div>
+</div>
+<input type="file" id="picker" accept="image/png,.png" hidden>
+
+<script>
+(() => {
+'use strict';
+const MOD = '/data/adb/modules/screenshot_frame';
+const DATA = '/data/adb/screenshot_frame';
+const BIN = DATA + '/bin/frame';
+const $ = id => document.getElementById(id);
+
+/* ---------- helpers (pure) ---------- */
+const q = s => "'" + String(s).replace(/'/g, "'\\''") + "'";
+
+function unq(v) {
+  v = v.trim();
+  if (v.length >= 2 && v[0] === "'" && v[v.length - 1] === "'") return v.slice(1, -1).replace(/'\\''/g, "'");
+  if (v.length >= 2 && v[0] === '"' && v[v.length - 1] === '"') return v.slice(1, -1);
+  return v;
+}
+function parseKV(text) {
+  const o = {};
+  for (const line of String(text).split('\n')) {
+    const t = line.trim();
+    if (!t || t[0] === '#') continue;
+    const i = t.indexOf('=');
+    if (i < 1) continue;
+    o[t.slice(0, i).trim()] = unq(t.slice(i + 1));
+  }
+  return o;
+}
+function parseSections(text) {
+  const sec = {}; let cur = null;
+  for (const line of String(text).split('\n')) {
+    if (line.startsWith('##')) { cur = line.slice(2).trim(); sec[cur] = []; continue; }
+    if (cur !== null) sec[cur].push(line);
+  }
+  return sec;
+}
+function safeName(file) {
+  return file.replace(/\.png$/i, '').replace(/[^A-Za-z0-9_.+-]/g, '_') || 'frame';
+}
+function hash(s) { let h = 5381; for (const c of s) h = ((h * 33) ^ c.codePointAt(0)) >>> 0; return h.toString(36); }
+function serializeConfig(c) {
+  return ['# Screenshot Framer config (key=value)',
+    'enabled=' + (c.enabled === '0' ? '0' : '1'),
+    'watch_dir=' + q(c.watch_dir), 'frames_dir=' + q(c.frames_dir),
+    'res=' + q(c.res || 'native'), 'mode=' + q(c.mode || 'cover'), 'rot=' + q(c.rot || 'ccw'),
+    'active=' + q(c.active || ''), ''].join('\n');
+}
+function serializeProfile(p) {
+  const lines = ['frame=' + q(p.frame), 'dx=' + (parseInt(p.dx, 10) || 0), 'dy=' + (parseInt(p.dy, 10) || 0)];
+  if (parseInt(p.ref_w, 10) > 0 && parseInt(p.ref_h, 10) > 0) lines.push('ref_w=' + parseInt(p.ref_w, 10), 'ref_h=' + parseInt(p.ref_h, 10));
+  return lines.join('\n') + '\n';
+}
+function parseDevSize(lines) {
+  let w = 0, h = 0;
+  for (const l of lines) { const m = l.match(/(\d+)\s*x\s*(\d+)/); if (m) { w = +m[1]; h = +m[2]; } }
+  return w ? { w, h } : null;
+}
+function fmtSize(n) {
+  n = +n || 0;
+  return n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB';
+}
+function b64(bytes) {
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 8192) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192));
+  return btoa(bin);
+}
+const isPng = b => b.length > 24 && b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4E && b[3] === 0x47;
+
+/* ---------- shell bridge ---------- */
+function exec(cmd) {
+  return new Promise((resolve, reject) => {
+    if (typeof ksu === 'undefined' || !ksu.exec) { reject(new Error('no-ksu')); return; }
+    const cb = 'sf_cb_' + Date.now() + '_' + Math.floor(Math.random() * 1e6);
+    window[cb] = (errno, stdout, stderr) => { delete window[cb]; resolve({ errno, stdout: stdout || '', stderr: stderr || '' }); };
+    try { ksu.exec(cmd, '{}', cb); } catch (e) { delete window[cb]; reject(e); }
+  });
+}
+async function writeFile(path, text) {
+  const r = await exec('echo ' + b64(new TextEncoder().encode(text)) + ' | base64 -d > ' + q(path + '.tmp') + ' && mv -f ' + q(path + '.tmp') + ' ' + q(path));
+  if (r.errno !== 0) throw new Error(r.stderr || '写入失败');
+}
+
+/* ---------- state ---------- */
+let cfg = {}, profiles = {}, frames = [], dev = null, running = false, hasBin = false, mprop = {}, logLines = [];
+let cur = null, img = null, detect = null, dirty = false, loadSeq = 0, loadedWatch = '';
+
+const GATHER = [
+  'cd ' + DATA + ' 2>/dev/null || exit 0',
+  "echo; echo '##config'; cat config 2>/dev/null",
+  'for p in profiles/*.conf; do [ -f "$p" ] || continue; echo; echo "##profile $(basename "$p" .conf)"; cat "$p"; done',
+  '. ./config 2>/dev/null',
+  "echo; echo '##frames'; ls -1 \"$frames_dir\" 2>/dev/null",
+  "echo; echo '##wm'; wm size 2>/dev/null",
+  "echo; echo '##running'; pidof inotifyd >/dev/null 2>&1 && echo 1 || echo 0",
+  "echo; echo '##bin'; [ -x " + BIN + " ] && echo 1 || echo 0",
+  "echo; echo '##prop'; cat " + MOD + "/module.prop 2>/dev/null",
+  "echo; echo '##log'; tail -n 80 " + DATA + "/log.txt 2>/dev/null"
+].join('\n');
+
+function toast(msg) {
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2600);
+}
+function setDirty(v) {
+  dirty = v;
+  $('bar').classList.toggle('show', v);
+  $('save').disabled = !v;
+}
+function showBanner(msg) { const b = $('banner'); b.textContent = msg; b.hidden = !msg; }
+
+function framePath(p) {
+  return p.frame[0] === '/' ? p.frame : cfg.frames_dir.replace(/\/$/, '') + '/' + p.frame;
+}
+function refSize(p) {
+  const w = parseInt(p.ref_w, 10), h = parseInt(p.ref_h, 10);
+  if (w > 0 && h > 0) return { w, h };
+  return dev || { w: 1080, h: 2340 };
+}
+
+/* ---------- loading ---------- */
+async function refresh() {
+  const r = await exec(GATHER);
+  const s = parseSections(r.stdout);
+  cfg = Object.assign({ enabled: '1', watch_dir: '/sdcard/Pictures/Screenshots', frames_dir: DATA + '/frames', res: 'native', mode: 'cover', rot: 'ccw', active: '' }, parseKV((s.config || []).join('\n')));
+  profiles = {};
+  for (const k of Object.keys(s)) if (k.startsWith('profile ')) profiles[k.slice(8).trim()] = parseKV(s[k].join('\n'));
+  frames = (s.frames || []).map(x => x.trim()).filter(x => /\.png$/i.test(x));
+  dev = parseDevSize(s.wm || []);
+  running = (s.running || []).join('').trim() === '1';
+  hasBin = (s.bin || []).join('').trim() === '1';
+  mprop = parseKV((s.prop || []).join('\n'));
+  logLines = s.log || [];
+  if (!dirty) loadedWatch = cfg.watch_dir;
+  const names = Object.keys(profiles);
+  if (!cur || !profiles[cur]) cur = profiles[cfg.active] ? cfg.active : (names[0] || null);
+  renderAll();
+  await loadFrame();
+}
+
+async function loadFrame() {
+  const seq = ++loadSeq;
+  $('calCard').hidden = !cur; $('matchCard').hidden = !cur;
+  if (!cur) { detect = null; img = null; return; }
+  const p = profiles[cur];
+  const safe = 'f_' + hash(p.frame) + '.png';
+  $('detectWarn').hidden = true;
+  $('detectInfo').textContent = '正在检测屏幕区域…';
+  const c = await exec('mkdir -p ' + q(MOD + '/webroot/cache') + ' && cp -f ' + q(framePath(p)) + ' ' + q(MOD + '/webroot/cache/' + safe));
+  if (seq !== loadSeq) return;
+  if (c.errno !== 0) { $('detectInfo').textContent = '壳图文件不存在：' + framePath(p); return; }
+  const rs = refSize(p);
+  const d = await exec(q(BIN) + ' detect ' + q(framePath(p)) + ' ' + rs.w + ' ' + rs.h);
+  if (seq !== loadSeq) return;
+  if (d.errno !== 0) {
+    detect = null;
+    $('detectInfo').textContent = '未检测到屏幕区域。壳图的屏幕部分必须为透明，且被边框完全包围。';
+    return;
+  }
+  detect = {}; for (const [k, v] of Object.entries(parseKV(d.stdout))) detect[k] = +v;
+  img = await loadImg('cache/' + safe + '?v=' + Date.now());
+  if (seq !== loadSeq) return;
+  $('detectInfo').textContent = '屏幕区域 ' + detect.w + '×' + detect.h + '，起点 (' + detect.x + ', ' + detect.y + ')，壳图尺寸 ' + detect.fw + '×' + detect.fh;
+  const diff = detect.aspect_diff, w = $('detectWarn');
+  if (diff > 0.01) { w.hidden = false; w.textContent = '壳图屏幕区域的宽高比与 ' + rs.w + '×' + rs.h + ' 相差 ' + (diff * 100).toFixed(1) + '%，套壳时将裁切部分边缘。'; }
+  draw();
+}
+function loadImg(src) {
+  return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('壳图加载失败')); i.src = src; });
+}
+
+/* ---------- preview ---------- */
+function pattern(w, h) {
+  const W = 540, H = Math.max(2, Math.round(W * h / w));
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const g = c.getContext('2d');
+  g.fillStyle = '#f4f6fa'; g.fillRect(0, 0, W, H);
+  g.strokeStyle = '#b9c3d6'; g.lineWidth = 1;
+  for (let x = 0; x <= W; x += 45) { g.beginPath(); g.moveTo(x + .5, 0); g.lineTo(x + .5, H); g.stroke(); }
+  for (let y = 0; y <= H; y += 45) { g.beginPath(); g.moveTo(0, y + .5); g.lineTo(W, y + .5); g.stroke(); }
+  g.strokeStyle = '#8895ad'; g.beginPath(); g.moveTo(0, 0); g.lineTo(W, H); g.moveTo(W, 0); g.lineTo(0, H); g.stroke();
+  g.strokeStyle = '#e6007e'; g.lineWidth = 6; g.strokeRect(3, 3, W - 6, H - 6);
+  g.fillStyle = '#e6007e'; g.fillRect(0, 0, 40, 40);
+  g.fillStyle = '#0a8f5a'; g.fillRect(W - 40, H - 40, 40, 40);
+  return c;
+}
+function draw() {
+  if (!img || !detect || !cur) return;
+  const p = profiles[cur], W = img.naturalWidth, H = img.naturalHeight;
+  const cv = $('cv'), cw = cv.clientWidth || 330, k = cw / W, dpr = window.devicePixelRatio || 1;
+  cv.width = Math.round(cw * dpr); cv.height = Math.round(H * k * dpr);
+  cv.style.height = (H * k) + 'px';
+  const g = cv.getContext('2d');
+  g.setTransform(dpr * k, 0, 0, dpr * k, 0, 0);
+  g.clearRect(0, 0, W, H);
+  const dx = parseInt(p.dx, 10) || 0, dy = parseInt(p.dy, 10) || 0;
+  const rx = detect.x + dx, ry = detect.y + dy, rs = refSize(p);
+  const pat = pattern(rs.w, rs.h), sc = Math.max(detect.w / pat.width, detect.h / pat.height);
+  g.save(); g.beginPath(); g.rect(rx, ry, detect.w, detect.h); g.clip();
+  g.drawImage(pat, rx + (detect.w - pat.width * sc) / 2, ry + (detect.h - pat.height * sc) / 2, pat.width * sc, pat.height * sc);
+  g.restore();
+  g.drawImage(img, 0, 0, W, H);
+  if ($('guides').checked) {
+    g.strokeStyle = '#ff8a00'; g.lineWidth = 2 / k; g.setLineDash([8 / k, 6 / k]);
+    g.strokeRect(detect.x, detect.y, detect.w, detect.h);
+  }
+}
+
+/* ---------- rendering ---------- */
+function el(tag, attrs, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (k === 'onclick') e.addEventListener('click', v); else e.setAttribute(k, v);
+  }
+  for (const kid of kids) e.append(kid);
+  return e;
+}
+const sgn = n => (n > 0 ? '+' : n < 0 ? '−' : '') + Math.abs(n) + ' px';
+
+function parseLog(lines) {
+  const out = [];
+  for (const l of lines) {
+    let m = l.match(/^(\d{4})-(\d\d)-(\d\d) (\d\d:\d\d):\d\d (framed|skipped) (.+?) \((\d+x\d+)\)(?: with (.+)|: (.*))?$/);
+    if (m) { out.push({ when: m[2] + '-' + m[3] + ' ' + m[4], kind: m[5], name: m[6], size: m[7], extra: m[8] || m[9] || '' }); continue; }
+    m = l.match(/^(\d{4})-(\d\d)-(\d\d) (\d\d:\d\d):\d\d (compose failed.*)$/);
+    if (m) out.push({ when: m[2] + '-' + m[3] + ' ' + m[4], kind: 'failed', name: '', size: '', extra: m[5] });
+  }
+  return out;
+}
+function renderRecent() {
+  const box = $('recent'); box.textContent = '';
+  const items = parseLog(logLines).slice(-5).reverse();
+  if (!items.length) { box.append(el('p', { class: 'small muted' }, '还没有处理记录。截一张全屏截图试试。')); return; }
+  for (const it of items) {
+    const pill = it.kind === 'framed' ? ['已套壳', 'ok'] : it.kind === 'skipped' ? ['已跳过', ''] : ['失败', 'bad'];
+    const note = it.kind === 'framed' ? it.size + '，' + it.extra : it.kind === 'skipped' ? it.size + '，尺寸不是全屏' : it.extra;
+    box.append(el('div', { class: 'recent-row' },
+      el('div', { class: 'rn' }, el('div', { class: 'rname' }, it.name || '处理失败'), el('div', { class: 'rtime' }, it.when + '，' + note)),
+      el('span', { class: 'pill ' + pill[1] }, pill[0])));
+  }
+}
+function renderAll() {
+  const st = $('status');
+  if (!hasBin) { st.textContent = '缺少核心程序'; st.className = 'status bad'; }
+  else if (running) { st.textContent = '监听服务运行中'; st.className = 'status ok'; }
+  else { st.textContent = '监听服务未运行，重启手机后生效'; st.className = 'status bad'; }
+  showBanner(hasBin ? '' : '核心程序缺失，请重新安装模块。');
+  const on = cfg.enabled !== '0';
+  $('enabled').setAttribute('aria-checked', String(on));
+  $('hero').classList.toggle('off', !on);
+  $('heroDesc').textContent = on ? '已开启，新的全屏截图会自动套壳' : '已关闭，截图不会被处理';
+
+  const names = Object.keys(profiles);
+  $('homeEmpty').hidden = names.length > 0; $('framesEmpty').hidden = names.length > 0;
+  $('sumFrame').textContent = cur || '未添加';
+  if (cur) { const r = refSize(profiles[cur]); $('sumMatch').textContent = r.w + ' × ' + r.h; } else $('sumMatch').textContent = '—';
+  $('sumDir').textContent = cfg.watch_dir;
+  renderDirUI();
+  $('sumRes').textContent = cfg.res === 'frame' ? '与壳图尺寸一致' : '保持截图原始分辨率';
+  renderRecent();
+  syncChips();
+  renderSeg('segRes', [['native', '原始分辨率'], ['frame', '壳图尺寸']], 'res');
+  renderSeg('segMode', [['cover', '等比填充'], ['stretch', '拉伸填充']], 'mode');
+  renderSeg('segRot', [['ccw', '逆时针 90°'], ['cw', '顺时针 90°']], 'rot');
+  if (cur) syncControls();
+  setDirty(dirty);
+  renderAdd();
+  const ver = mprop.version || '';
+  $('abVer').textContent = 'Screenshot Framer  ' + ver;
+  $('abVer2').textContent = ver ? ver + (mprop.versionCode ? '（' + mprop.versionCode + '）' : '') : '—';
+  $('verLine').textContent = ver ? '截图套壳 ' + ver : '截图套壳';
+}
+const chipEls = new Map();
+function syncChips() {
+  const chips = $('chips'), addChip = $('addChip');
+  for (const [n, e] of Array.from(chipEls)) if (!profiles[n]) { e.remove(); chipEls.delete(n); }
+  for (const n of Object.keys(profiles)) {
+    let e = chipEls.get(n);
+    if (!e) { e = el('button', { class: 'chip profile', onclick: () => switchTo(n) }, n); chipEls.set(n, e); chips.insertBefore(e, addChip); }
+    e.setAttribute('aria-pressed', String(n === cur));
+  }
+}
+function icon(name) {
+  const ns = 'http://www.w3.org/2000/svg';
+  const s = document.createElementNS(ns, 'svg'); s.setAttribute('class', 'ic sm');
+  const u = document.createElementNS(ns, 'use'); u.setAttribute('href', '#i-' + name); s.append(u); return s;
+}
+function renderSeg(id, opts, key) {
+  const box = $(id); box.textContent = '';
+  for (const [v, label] of opts) {
+    const on = cfg[key] === v;
+    box.append(el('button', { 'aria-pressed': String(on), onclick: () => { cfg[key] = v; setDirty(true); renderAll(); } }, on ? icon('check') : '', label));
+  }
+}
+function syncControls() {
+  const p = profiles[cur], dx = parseInt(p.dx, 10) || 0, dy = parseInt(p.dy, 10) || 0;
+  $('sx').value = dx; $('sy').value = dy;
+  $('rx').textContent = sgn(dx); $('ry').textContent = sgn(dy);
+  const rs = refSize(p); $('rw').value = rs.w; $('rh').value = rs.h;
+}
+
+/* ---------- add frame: system picker + folder browser (fallback) ---------- */
+const ROOT = '/sdcard';
+let br = { dir: ROOT, items: [], busy: false, err: '', loaded: false, open: false };
+
+async function listDir(dir) {
+  br.busy = true; br.err = ''; renderAdd();
+  const r = await exec('cd ' + q(dir) + ' 2>/dev/null || { echo "!err"; exit 0; }\n' +
+    'for f in *; do [ -e "$f" ] || continue\n' +
+    ' if [ -d "$f" ]; then echo "d|0|0|0|$f"\n' +
+    ' else case "$f" in *.png|*.PNG)\n' +
+    '  set -- $(od -An -tu1 -j16 -N8 "$f" 2>/dev/null); w=0; h=0\n' +
+    '  [ $# -eq 8 ] && { w=$(( $1*16777216+$2*65536+$3*256+$4 )); h=$(( $5*16777216+$6*65536+$7*256+$8 )); }\n' +
+    '  echo "f|$w|$h|$(stat -c %s "$f" 2>/dev/null)|$f";; esac; fi; done');
+  br.busy = false; br.loaded = true;
+  if (r.stdout.startsWith('!err')) { br.err = '无法打开该文件夹'; renderAdd(); return; }
+  br.dir = dir;
+  br.items = r.stdout.split('\n').filter(l => /^[df]\|/.test(l)).map(l => {
+    const a = l.split('|'); return { dir: a[0] === 'd', w: +a[1], h: +a[2], size: +a[3], name: a.slice(4).join('|') };
+  }).sort((x, y) => (x.dir === y.dir ? x.name.localeCompare(y.name, 'zh') : x.dir ? -1 : 1));
+  renderAdd();
+}
+function goUp() { if (br.dir !== ROOT) listDir(br.dir.replace(/\/[^/]+$/, '') || ROOT); }
+
+function setOpen(wrapId, toggleId, open) {
+  const w = $(wrapId), t = $(toggleId);
+  w.classList.toggle('open', open);
+  if (open) w.removeAttribute('inert'); else w.setAttribute('inert', '');
+  t.setAttribute('aria-expanded', String(open));
+}
+const isOpen = id => $(id).classList.contains('open');
+function setAddOpen(open) { setOpen('addWrap', 'addChip', open); if (open) renderAdd(); }
+function setBrOpen(open) {
+  br.open = open; setOpen('brWrap', 'brToggle', open);
+  if (open && !br.loaded) listDir(br.dir); else renderAdd();
+}
+function toggleAdd() { setAddOpen(!isOpen('addWrap')); }
+
+function renderAdd() {
+  const body = $('brBody'), fresh = $('freshBody');
+  body.textContent = ''; fresh.textContent = '';
+  const upAttrs = { class: 'btn', onclick: goUp }; if (br.dir === ROOT) upAttrs.disabled = '';
+  body.append(el('div', { class: 'row', style: 'margin:0 0 6px' },
+    el('button', upAttrs, '上一级'),
+    el('button', { class: 'btn', onclick: () => listDir(ROOT + '/Download') }, 'Download'),
+    el('button', { class: 'btn', onclick: () => listDir(ROOT + '/Pictures') }, 'Pictures')));
+  body.append(el('p', { class: 'small muted', style: 'overflow-wrap:anywhere;margin-bottom:6px' }, br.dir));
+  const list = el('div', { class: 'list' });
+  if (br.busy) list.append(el('p', { class: 'small muted' }, '正在读取…'));
+  else if (br.err) list.append(el('p', { class: 'warn' }, br.err));
+  else if (!br.items.length) list.append(el('p', { class: 'small muted' }, '该文件夹中没有 PNG 文件或子文件夹。'));
+  for (const it of br.items) {
+    if (it.dir) list.append(el('div', { class: 'item' }, el('button', { class: 'btn link', style: 'text-align:left;height:auto;padding:6px 0', onclick: () => listDir(br.dir + '/' + it.name) }, it.name + ' ›')));
+    else list.append(el('div', { class: 'item' },
+      el('span', { class: 'nm' }, it.name, el('span', { class: 'meta' }, (it.w ? it.w + '×' + it.h + '，' : '') + fmtSize(it.size))),
+      el('button', { class: 'btn', onclick: () => addFromPath(br.dir + '/' + it.name) }, '导入')));
+  }
+  body.append(list);
+  const used = new Set(Object.values(profiles).map(p => p.frame));
+  const fr = frames.filter(f => !used.has(f));
+  if (fr.length) {
+    fresh.append(el('p', { class: 'small muted', style: 'margin:12px 0 4px' }, '已导入但尚未配置的壳图'));
+    const l2 = el('div', { class: 'list' });
+    for (const f of fr) l2.append(el('div', { class: 'item' }, el('span', { class: 'nm' }, f), el('button', { class: 'btn', onclick: () => addFrame(f) }, '使用')));
+    fresh.append(l2);
+  }
+}
+
+function uniqueTarget(base) {
+  let target = base, i = 2;
+  while (frames.includes(target)) target = base.replace(/\.png$/i, '') + '_' + (i++) + '.png';
+  return target;
+}
+async function finishAdd(dest, target) {
+  const rs = dev || { w: 1080, h: 2340 };
+  const d = await exec(q(BIN) + ' detect ' + q(dest) + ' ' + rs.w + ' ' + rs.h);
+  if (d.errno !== 0) {
+    await exec('rm -f ' + q(dest));
+    toast('壳图无效：屏幕区域必须为透明，且被边框完全包围');
+    return false;
+  }
+  frames.push(target);
+  await addFrame(target);
+  return true;
+}
+async function addFromPath(path) {
+  const target = uniqueTarget(path.split('/').pop());
+  const dir = cfg.frames_dir.replace(/\/$/, ''), dest = dir + '/' + target;
+  toast('正在导入…');
+  const r = await exec('mkdir -p ' + q(dir) + ' && cp -f ' + q(path) + ' ' + q(dest));
+  if (r.errno !== 0) { toast('导入失败：' + (r.stderr || '').trim()); return false; }
+  return finishAdd(dest, target);
+}
+async function importFile(file) {
+  if (!file) return false;
+  if (file.size > 40 * 1048576) { toast('文件过大（上限 40 MB）'); return false; }
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  if (!isPng(bytes)) { toast('仅支持 PNG 格式的壳图'); return false; }
+  const target = uniqueTarget(file.name.replace(/[\/\\]/g, '_'));
+  const dir = cfg.frames_dir.replace(/\/$/, ''), dest = dir + '/' + target;
+  const mk = await exec('mkdir -p ' + q(dir) + ' && : > ' + q(dest));
+  if (mk.errno !== 0) { toast('无法创建壳图目录'); return false; }
+  const CH = 60000;
+  for (let off = 0; off < bytes.length; off += CH) {
+    const r = await exec('echo ' + b64(bytes.subarray(off, off + CH)) + ' | base64 -d >> ' + q(dest));
+    if (r.errno !== 0) { await exec('rm -f ' + q(dest)); toast('导入失败：写入出错'); return false; }
+    toast('正在导入… ' + Math.min(100, Math.round((off + CH) * 100 / bytes.length)) + '%');
+  }
+  return finishAdd(dest, target);
+}
+
+/* ---------- actions ---------- */
+async function switchTo(n) { cur = n; cfg.active = n; setDirty(true); renderAll(); await loadFrame(); }
+async function addFrame(file) {
+  let name = safeName(file), i = 2; while (profiles[name]) name = safeName(file) + '_' + i++;
+  profiles[name] = { frame: file, dx: '0', dy: '0', ref_w: String((dev || {}).w || ''), ref_h: String((dev || {}).h || '') };
+  cur = name; cfg.active = name; setAddOpen(false);
+  setDirty(true); renderAll(); await loadFrame();
+  toast('壳图已添加，请点击“保存”以生效');
+}
+function nudge(axis, d) {
+  const p = profiles[cur]; p[axis] = String(Math.max(-60, Math.min(60, (parseInt(p[axis], 10) || 0) + d)));
+  setDirty(true); syncControls(); draw();
+}
+const DIR_PRESETS = [['/sdcard/Pictures/Screenshots', 'Pictures/Screenshots'], ['/sdcard/DCIM/Screenshots', 'DCIM/Screenshots']];
+function normDir(v) { return String(v || '').trim().replace(/\/+$/, ''); }
+function renderDirUI() {
+  const box = $('dirPresets');
+  if (!box.childNodes.length) for (const [p, label] of DIR_PRESETS) box.append(el('button', { class: 'chip', 'data-p': p, onclick: () => setWatchDir(p) }, label));
+  for (const b of box.children) b.setAttribute('aria-pressed', String(normDir(cfg.watch_dir) === b.dataset.p));
+  if (document.activeElement !== $('wdir')) $('wdir').value = cfg.watch_dir || '';
+  for (const b of $('dirFound').children) b.setAttribute('aria-pressed', String(normDir(cfg.watch_dir) === b.dataset.p));
+}
+function setWatchDir(v) { cfg.watch_dir = v; setDirty(true); renderAll(); }
+async function scanDirs() {
+  const btn = $('dirScan'); btn.disabled = true; $('dirFound').textContent = '';
+  const r = await exec('find /sdcard/Pictures /sdcard/DCIM -maxdepth 2 -type d \\( -iname "*screenshot*" -o -iname "*截屏*" -o -iname "*截图*" \\) 2>/dev/null | while read -r d; do ' +
+    'n=$(find "$d" -maxdepth 1 -type f \\( -iname "*.png" -o -iname "*.jpg" -o -iname "*.jpeg" \\) 2>/dev/null | wc -l); ' +
+    'l=$(ls -t "$d" 2>/dev/null | grep -iE "[.](png|jpe?g)$" | head -n 1); t=0; [ -n "$l" ] && t=$(stat -c %Y "$d/$l" 2>/dev/null); ' +
+    'echo "$d|$n|$t"; done');
+  btn.disabled = false;
+  const rows = r.stdout.split('\n').map(l => l.split('|')).filter(a => a.length === 3 && a[0]).map(a => ({ p: a[0], n: +a[1] || 0, t: +a[2] || 0 }));
+  rows.sort((a, b) => b.t - a.t);
+  if (!rows.length) { $('dirFound').append(el('p', { class: 'small muted' }, '没有找到截图文件夹。请先截一张图，或手动填写路径。')); return; }
+  for (const x of rows) {
+    const when = x.t ? new Date(x.t * 1000).toLocaleString('zh-CN', { hour12: false }) : '无截图';
+    $('dirFound').append(el('button', { class: 'dirrow', 'data-p': x.p, onclick: () => setWatchDir(x.p) },
+      el('span', { class: 'dp' }, x.p), el('span', { class: 'dm' }, x.n + ' 张截图，最近：' + when)));
+  }
+  renderDirUI();
+}
+async function save() {
+  try {
+    const nd = normDir(cfg.watch_dir);
+    if (!/^\/sdcard\/[^\n]+$/.test(nd)) { toast('截图文件夹必须位于 /sdcard/ 下'); return; }
+    cfg.watch_dir = nd;
+    const changed = nd !== normDir(loadedWatch);
+    if (changed) {
+      const ex = await exec('[ -d ' + q(nd) + ' ] && echo 1 || echo 0');
+      if (ex.stdout.trim() !== '1') {
+        const ok = await askConfirm('文件夹不存在', '“' + nd + '”不存在，保存时将自动创建。请确认路径无误。', '继续保存');
+        if (!ok) return;
+      }
+    }
+    if (cur) cfg.active = cur;
+    for (const [n, p] of Object.entries(profiles)) await writeFile(DATA + '/profiles/' + n + '.conf', serializeProfile(p));
+    await writeFile(DATA + '/config', serializeConfig(cfg));
+    if (changed) {
+      await exec('sh ' + q(MOD + '/watch.sh'));
+      loadedWatch = nd;
+      await new Promise(r => setTimeout(r, 600));
+      const rr = await exec("pidof inotifyd >/dev/null 2>&1 && echo 1 || echo 0");
+      running = rr.stdout.trim() === '1';
+      setDirty(false); renderAll();
+      toast(running ? '已保存，已切换监听文件夹' : '已保存，但监听服务未启动，请重启手机');
+      return;
+    }
+    setDirty(false); toast('设置已保存');
+  } catch (e) { toast('保存失败：' + e.message); }
+}
+let dlgResolve = null;
+function askConfirm(title, body, okText) {
+  return new Promise(resolve => {
+    if (dlgResolve) dlgResolve(false);
+    dlgResolve = resolve;
+    $('dlgTitle').textContent = title; $('dlgBody').textContent = body; $('dlgOk').textContent = okText || '确定';
+    $('scrim').classList.add('open'); $('scrim').setAttribute('aria-hidden', 'false');
+    $('main').setAttribute('inert', ''); $('bar').setAttribute('inert', ''); $('nav').setAttribute('inert', '');
+    setTimeout(() => $('dlgCancel').focus && $('dlgCancel').focus(), 60);
+  });
+}
+function closeConfirm(result) {
+  $('scrim').classList.remove('open'); $('scrim').setAttribute('aria-hidden', 'true');
+  $('main').removeAttribute('inert'); $('bar').removeAttribute('inert'); $('nav').removeAttribute('inert');
+  const r = dlgResolve; dlgResolve = null; if (r) r(result);
+}
+async function del() {
+  if (!cur) return;
+  const ok = await askConfirm('删除这套壳图？', '将删除“' + cur + '”及其在模块中保存的壳图副本，不会影响你选择的原文件。', '删除');
+  if (!ok || !cur) return;
+  const gone = profiles[cur];
+  const r = await exec('rm -f ' + q(DATA + '/profiles/' + cur + '.conf'));
+  if (r.errno !== 0) { toast('删除失败'); return; }
+  if (gone && gone.frame[0] !== '/') {
+    await exec('rm -f ' + q(framePath(gone)) + ' ' + q(MOD + '/webroot/cache/f_' + hash(gone.frame) + '.png'));
+    frames = frames.filter(f => f !== gone.frame);
+  }
+  delete profiles[cur]; if (cfg.active === cur) cfg.active = '';
+  cur = Object.keys(profiles)[0] || null; if (cur) cfg.active = cur;
+  await writeFile(DATA + '/config', serializeConfig(cfg));
+  renderAll(); await loadFrame(); toast('已删除');
+}
+
+/* ---------- tabs / menu / about / log ---------- */
+const TITLES = { home: '截图套壳', frames: '设备壳图', settings: '设置' };
+function showTab(name) {
+  for (const p of document.querySelectorAll('.page')) p.classList.toggle('active', p.id === 'page-' + name);
+  for (const b of document.querySelectorAll('.nav button')) { if (b.dataset.tab === name) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); }
+  $('pageTitle').textContent = TITLES[name] || '截图套壳';
+  window.scrollTo(0, 0);
+  if (name === 'frames') requestAnimationFrame(draw);
+}
+function setMenu(open) { $('menu').hidden = !open; $('menuBtn').setAttribute('aria-expanded', String(open)); }
+function openAbout() { setMenu(false); $('about').hidden = false; }
+function closeAbout() { $('about').hidden = true; }
+async function loadLog() {
+  const r = await exec('tail -n 120 ' + q(DATA + '/log.txt') + ' 2>/dev/null');
+  $('logText').textContent = r.stdout.trim() || '暂无日志。';
+  const pg = $('logPage'); pg.scrollTop = pg.scrollHeight;
+}
+async function openLog() { setMenu(false); $('logPage').hidden = false; await loadLog(); }
+function closeLog() { $('logPage').hidden = true; }
+
+function init() {
+  $('menuBtn').addEventListener('click', e => { e.stopPropagation(); setMenu($('menu').hidden); });
+  $('menuAbout').addEventListener('click', openAbout);
+  $('menuLog').addEventListener('click', openLog);
+  $('aboutBack').addEventListener('click', closeAbout);
+  $('logBack').addEventListener('click', closeLog);
+  $('logRefresh').addEventListener('click', loadLog);
+  $('rowAbout').addEventListener('click', openAbout);
+  $('rowLog').addEventListener('click', openLog);
+  for (const b of document.querySelectorAll('.nav button')) b.addEventListener('click', () => showTab(b.dataset.tab));
+  for (const b of document.querySelectorAll('[data-goto]')) b.addEventListener('click', () => showTab(b.dataset.goto));
+  $('homeAdd').addEventListener('click', () => { showTab('frames'); setAddOpen(true); });
+  document.addEventListener('click', () => setMenu(false));
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    setMenu(false);
+    if (dlgResolve) closeConfirm(false); else if (!$('logPage').hidden) closeLog(); else closeAbout();
+  });
+  if (typeof ksu === 'undefined') { showBanner('请在支持 WebUI 的模块管理器（如 KernelSU、APatch）中打开此页面。'); $('status').textContent = ''; return; }
+  $('enabled').addEventListener('click', async () => {
+    cfg.enabled = cfg.enabled === '0' ? '1' : '0'; renderAll();
+    try { await writeFile(DATA + '/config', serializeConfig(cfg)); toast(cfg.enabled === '1' ? '自动套壳已开启' : '自动套壳已关闭'); } catch (e) { toast('保存失败'); }
+  });
+  for (const b of document.querySelectorAll('.step')) b.addEventListener('click', () => nudge(b.dataset.axis, +b.dataset.d));
+  $('sx').addEventListener('input', e => { profiles[cur].dx = e.target.value; setDirty(true); syncControls(); draw(); });
+  $('sy').addEventListener('input', e => { profiles[cur].dy = e.target.value; setDirty(true); syncControls(); draw(); });
+  $('guides').addEventListener('change', draw);
+  $('wdir').addEventListener('input', e => { cfg.watch_dir = e.target.value; setDirty(true); $('sumDir').textContent = cfg.watch_dir; renderDirUI(); });
+  $('dirScan').addEventListener('click', scanDirs);
+  $('reset').addEventListener('click', () => { profiles[cur].dx = '0'; profiles[cur].dy = '0'; setDirty(true); syncControls(); draw(); });
+  $('rw').addEventListener('change', e => { profiles[cur].ref_w = e.target.value; setDirty(true); });
+  $('rh').addEventListener('change', e => { profiles[cur].ref_h = e.target.value; setDirty(true); });
+  $('devSize').addEventListener('click', () => {
+    if (!dev) { toast('无法读取本机分辨率'); return; }
+    profiles[cur].ref_w = String(dev.w); profiles[cur].ref_h = String(dev.h); setDirty(true); syncControls();
+  });
+  $('addChip').addEventListener('click', toggleAdd);
+  $('pickBtn').addEventListener('click', () => $('picker').click());
+  $('brToggle').addEventListener('click', () => setBrOpen(!isOpen('brWrap')));
+  $('dlgOk').addEventListener('click', () => closeConfirm(true));
+  $('dlgCancel').addEventListener('click', () => closeConfirm(false));
+  $('scrim').addEventListener('click', e => { if (e.target === $('scrim')) closeConfirm(false); });
+  $('picker').addEventListener('change', async e => { const f = e.target.files && e.target.files[0]; e.target.value = ''; await importFile(f); });
+  $('del').addEventListener('click', del);
+  $('save').addEventListener('click', save);
+  window.addEventListener('resize', draw);
+  refresh().catch(e => { showBanner('读取失败：' + e.message); });
+}
+
+window.__sf = { showTab, openLog, parseLog, setAddOpen, askConfirm, listDir, addFromPath, importFile, openAbout, closeAbout, q, unq, parseKV, parseSections, safeName, hash, serializeConfig, serializeProfile, parseDevSize, fmtSize, exec, writeFile, refresh, addFrame, save, nudge, del,
+  get: () => ({ br, cfg, profiles, frames, dev, running, hasBin, cur, detect, mprop }) };
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();
+</script>
+</body>
+</html>
