@@ -1,0 +1,1736 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>截图套壳</title>
+<style>
+:root{
+  --bg:#f5f6fb; --surface:#ffffff; --tonal:#eceff8; --ink:#181b23; --muted:#596175; --line:#dde1ec;
+  --primary:#3558d6; --on-primary:#ffffff; --primary-c:#dde4ff; --on-primary-c:#10206b;
+  --ok:#17784c; --ok-c:#d5f1e2; --warn:#97480a; --warn-c:#ffe7d0; --stage:#e8ecf5; color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0e1117; --surface:#171b24; --tonal:#212736; --ink:#e7eaf3; --muted:#9ba4b8; --line:#2a3244;
+    --primary:#aec3ff; --on-primary:#0e1d5a; --primary-c:#2b3e86; --on-primary-c:#dde4ff;
+    --ok:#74d9a5; --ok-c:#17402c; --warn:#f2b673; --warn-c:#4b2c0d; --stage:#0a0d13; color-scheme:dark;
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.5 system-ui,-apple-system,"Noto Sans CJK SC","PingFang SC","Microsoft YaHei",sans-serif;
+  padding:env(safe-area-inset-top,0) 0 calc(96px + env(safe-area-inset-bottom,0))}
+p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+.muted{color:var(--muted)} .small{font-size:13px}
+.ic{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ic.sm{width:18px;height:18px} .ic.fill{fill:currentColor;stroke:none}
+.wrap{max-width:560px;margin:0 auto;padding:0 16px}
+
+/* top bar */
+.appbar{display:flex;align-items:center;justify-content:space-between;padding:14px 4px 10px 6px;min-height:68px}
+.appbar h1{font-size:28px;line-height:1.2;font-weight:500;margin:0;letter-spacing:.01em}
+.iconbtn{width:48px;height:48px;border-radius:50%;border:0;background:none;display:flex;align-items:center;justify-content:center}
+.iconbtn:active{background:var(--tonal)}
+.menuwrap{position:relative}
+.menu{position:absolute;right:0;top:50px;min-width:168px;background:var(--surface);border-radius:16px;padding:6px;z-index:30;
+  box-shadow:0 6px 24px rgba(0,0,0,.18);border:1px solid var(--line)}
+.menu button{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;background:none;height:48px;padding:0 14px;border-radius:12px}
+.menu button:active{background:var(--tonal)}
+.banner{background:var(--warn-c);color:var(--warn);border-radius:16px;padding:12px 14px;margin:0 0 12px;font-size:14px}
+
+/* pages */
+.page{display:none}
+.page.active{display:block;animation:pageIn .24s ease both}
+@keyframes pageIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* cards */
+.card{background:var(--surface);border-radius:24px;padding:18px;margin:0 0 12px}
+.card-h{font-size:16px;font-weight:600;margin:0 0 4px}
+.card-s{font-size:13px;color:var(--muted);margin:0 0 12px}
+.hero{display:flex;align-items:center;gap:14px;background:var(--primary-c);color:var(--on-primary-c);border-radius:28px;padding:18px 18px 18px 20px;margin:0 0 10px;transition:background .2s,opacity .2s}
+.hero.off{background:var(--tonal);color:var(--muted)}
+.hero-ic{width:48px;height:48px;border-radius:16px;background:var(--surface);display:flex;align-items:center;justify-content:center;color:var(--primary)}
+.hero.off .hero-ic{color:var(--muted)}
+.hero-tx{flex:1;min-width:0}
+.hero-t{font-size:18px;font-weight:600}
+.hero-d{font-size:13px;opacity:.85}
+.status{display:inline-flex;align-items:center;gap:6px;font-size:13px;padding:5px 12px;border-radius:999px;background:var(--tonal);color:var(--muted);margin:0 0 12px}
+.status::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
+.statusrow{display:flex;flex-wrap:wrap;column-gap:8px}
+#ffStatus{cursor:pointer}
+.status.ok{background:var(--ok-c);color:var(--ok)} .status.bad{background:var(--warn-c);color:var(--warn)}
+
+/* switch */
+.switch{width:56px;height:32px;border-radius:16px;border:2px solid var(--muted);background:transparent;position:relative;padding:0;flex:none;transition:background .18s,border-color .18s}
+.switch::after{content:"";position:absolute;top:50%;left:6px;width:16px;height:16px;margin-top:-8px;border-radius:50%;background:var(--muted);transition:left .18s,width .18s,height .18s,margin-top .18s,background .18s}
+.switch[aria-checked="true"]{background:var(--primary);border-color:var(--primary)}
+.switch[aria-checked="true"]::after{left:28px;width:24px;height:24px;margin-top:-12px;background:var(--on-primary)}
+
+/* list rows */
+.list-card{padding:6px 6px}
+.lrow{display:flex;align-items:center;gap:14px;width:100%;text-align:left;border:0;background:none;padding:12px 14px;border-radius:18px;min-height:60px}
+button.lrow:active{background:var(--tonal)}
+.lrow .li{width:40px;height:40px;border-radius:14px;background:var(--tonal);display:flex;align-items:center;justify-content:center;color:var(--primary)}
+.lrow .lt{flex:1;min-width:0}
+.lrow .ll{font-size:13px;color:var(--muted)}
+.lrow .lv{font-size:15px;overflow-wrap:anywhere}
+.lrow .lc{color:var(--muted)}
+.lrow.locked .lc{display:none}
+.lrow.locked .lv{color:var(--muted)}
+.lnk{color:var(--primary);text-decoration:none;font-weight:600}
+.resbox .row{margin-top:12px}
+.recent-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.recent-row:first-of-type{border-top:0}
+.recent-row .rn{flex:1;min-width:0}
+.recent-row .rname{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.recent-row .rtime{font-size:12px;color:var(--muted)}
+.pill{font-size:12px;padding:3px 10px;border-radius:999px;white-space:nowrap;background:var(--tonal);color:var(--muted)}
+.pill.ok{background:var(--ok-c);color:var(--ok)} .pill.bad{background:var(--warn-c);color:var(--warn)}
+
+/* empty state */
+.empty{text-align:center;padding:26px 18px}
+.empty svg.big{width:72px;height:72px;color:var(--primary);margin:0 auto 8px;display:block;stroke-width:1.4}
+.empty .et{font-size:17px;font-weight:600;margin-bottom:4px}
+.empty .ed{font-size:14px;color:var(--muted);margin:0 auto 16px;max-width:300px}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 20px;border-radius:999px;border:0;background:var(--tonal);color:var(--ink);font-weight:500}
+.btn:active{filter:brightness(.95)} .btn:disabled{opacity:.45}
+.btn.fill{background:var(--primary);color:var(--on-primary)}
+.btn.text{background:none;color:var(--primary);padding:0 12px}
+.btn.danger{color:var(--warn)}
+.btn.dangerline{background:transparent;color:var(--warn);box-shadow:inset 0 0 0 1.5px var(--warn)}
+.btn.dangerline:active{background:var(--warn-c);filter:none}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+/* chips */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 18px;border-radius:999px;border:1px solid var(--line);background:var(--surface);
+  transition:background .18s,border-color .18s,color .18s,transform .12s}
+.chip:active{transform:scale(.97)}
+.chip.profile{animation:chipIn .2s ease both}
+@keyframes chipIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}
+.chip[aria-pressed="true"]{background:var(--primary-c);border-color:transparent;color:var(--on-primary-c);font-weight:600}
+.chip.add{border-style:dashed;color:var(--muted)}
+.chip.add .ic{transition:transform .26s cubic-bezier(.2,.8,.2,1)}
+.chip.add[aria-expanded="true"]{border-style:solid;border-color:transparent;background:var(--primary-c);color:var(--on-primary-c)}
+.chip.add[aria-expanded="true"] .ic{transform:rotate(45deg)}
+
+/* collapse */
+.collapse{display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows .3s cubic-bezier(.2,.8,.2,1),opacity .22s ease}
+.collapse.open{grid-template-rows:1fr;opacity:1}
+.collapse>.inner{overflow:hidden;min-height:0}
+.sub{margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.chev{display:inline-flex;transition:transform .26s cubic-bezier(.2,.8,.2,1)}
+[aria-expanded="true"]>.chev{transform:rotate(90deg)}
+.list{display:flex;flex-direction:column}
+.item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.item:first-child{border-top:0}
+.item .nm{overflow-wrap:anywhere}
+.item .meta{display:block;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+/* calibration */
+.stage{background:var(--stage);border-radius:20px;padding:14px;margin:4px 0 14px;display:flex;justify-content:center}
+.stage canvas{display:block;width:100%;max-width:300px;height:auto;border-radius:6px;
+  background-image:linear-gradient(45deg,rgba(128,128,128,.16) 25%,transparent 25%,transparent 75%,rgba(128,128,128,.16) 75%),
+  linear-gradient(45deg,rgba(128,128,128,.16) 25%,transparent 25%,transparent 75%,rgba(128,128,128,.16) 75%);
+  background-size:16px 16px;background-position:0 0,8px 8px}
+.readout{display:flex;gap:10px;margin-bottom:8px}
+.readout>div{flex:1;background:var(--tonal);border-radius:16px;padding:8px 14px;font-variant-numeric:tabular-nums}
+.readout .k{font-size:12px;color:var(--muted)} .readout b{display:block;font-size:20px;font-weight:600}
+.nudge{display:grid;grid-template-columns:48px 1fr 48px;gap:8px;align-items:center;margin-bottom:6px}
+.nudge .lbl{grid-column:1/-1;font-size:13px;color:var(--muted);margin-bottom:-2px}
+.step,.step2{height:48px;border-radius:50%;border:0;background:var(--tonal);font-size:22px;line-height:1}
+.step:active,.step2:active{filter:brightness(.93)}
+input[type=range]{width:100%;accent-color:var(--primary);height:36px}
+input[type=text]{width:100%;height:48px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:14px;padding:0 12px;margin-top:8px}
+.dirrow{display:block;width:100%;text-align:left;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:14px;padding:10px 14px;margin-top:8px;font:inherit;cursor:pointer}
+.dirrow[aria-pressed="true"]{background:var(--primary-c);border-color:transparent;color:var(--on-primary-c)}
+.dirrow .dp{display:block;font-size:14px;word-break:break-all}
+.dirrow .dm{display:block;font-size:12px;color:var(--muted)}
+.dirrow[aria-pressed="true"] .dm{color:inherit;opacity:.8}
+input[type=number]{width:104px;height:48px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;padding:0 12px;font-variant-numeric:tabular-nums}
+.check{display:flex;gap:10px;align-items:center;font-size:14px;margin-top:6px;min-height:44px}
+.check input{width:20px;height:20px;accent-color:var(--primary)}
+.warn{color:var(--warn);font-size:13px;margin-top:6px}
+
+/* segmented */
+.seg{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;margin:6px 0 6px}
+.seg button{flex:1;border:0;background:transparent;min-height:44px;padding:0 8px;display:flex;align-items:center;justify-content:center;gap:6px;border-right:1px solid var(--line);transition:background .18s}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--primary-c);color:var(--on-primary-c);font-weight:600}
+.field-t{font-size:15px;font-weight:500;margin-top:14px}
+.field-t:first-of-type{margin-top:4px}
+.field-d{font-size:13px;color:var(--muted);margin-bottom:2px}
+
+/* save bar + nav */
+.bar{position:fixed;left:12px;right:12px;bottom:calc(84px + env(safe-area-inset-bottom,0));max-width:536px;margin:0 auto;z-index:15;
+  display:flex;align-items:center;gap:12px;padding:10px 10px 10px 20px;border-radius:20px;background:var(--ink);color:var(--bg);
+  box-shadow:0 6px 24px rgba(0,0,0,.25);opacity:0;transform:translateY(16px);visibility:hidden;transition:opacity .2s,transform .24s cubic-bezier(.2,.8,.2,1),visibility 0s linear .24s}
+.bar.show{opacity:1;transform:none;visibility:visible;transition:opacity .2s,transform .24s cubic-bezier(.2,.8,.2,1)}
+.bar span{flex:1;font-size:14px}
+.bar .btn{background:var(--primary-c);color:var(--on-primary-c);height:40px}
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:10;display:flex;justify-content:center;background:var(--surface);
+  padding:8px 8px calc(10px + env(safe-area-inset-bottom,0));border-top:1px solid var(--line)}
+.nav-in{display:flex;width:100%;max-width:560px;justify-content:space-around}
+.nav button{flex:1;border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;color:var(--muted);padding:0;min-height:56px}
+.nav .pillbg{width:64px;height:32px;border-radius:16px;display:flex;align-items:center;justify-content:center;transition:background .2s}
+.nav button[aria-current="page"]{color:var(--ink);font-weight:600}
+.nav button[aria-current="page"] .pillbg{background:var(--primary-c);color:var(--on-primary-c)}
+
+/* toast + dialog + overlays */
+.toast{position:fixed;left:50%;bottom:calc(150px + env(safe-area-inset-bottom,0));transform:translateX(-50%);background:var(--ink);color:var(--bg);
+  padding:10px 18px;border-radius:14px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90%;z-index:50;text-align:center}
+.toast.show{opacity:1}
+.scrim{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(8,12,18,.55);opacity:0;visibility:hidden;transition:opacity .2s ease,visibility 0s linear .2s}
+.scrim.open{opacity:1;visibility:visible;transition:opacity .2s ease}
+.dialog{width:min(340px,calc(100% - 48px));background:var(--surface);border-radius:28px;padding:24px 22px 16px;transform:translateY(14px) scale(.96);opacity:0;transition:transform .24s cubic-bezier(.2,.8,.2,1),opacity .2s ease}
+.scrim.open .dialog{transform:none;opacity:1}
+.dialog h2{margin:0 0 8px;font-size:20px;font-weight:500}
+.dlg-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}
+.btn.warnfill{background:var(--warn);color:var(--on-primary)}
+.overlay{position:fixed;inset:0;background:var(--bg);overflow:auto;z-index:40;padding:env(safe-area-inset-top,0) 0 calc(24px + env(safe-area-inset-bottom,0))}
+.overlay-bar{position:sticky;top:0;background:var(--bg);display:flex;align-items:center;gap:4px;padding:8px 8px;z-index:2}
+.overlay-bar h2{margin:0;font-size:20px;font-weight:500;flex:1}
+.overlay .ob{max-width:560px;margin:0 auto;padding:4px 16px}
+.about-title{font-size:26px;font-weight:500;margin:0}
+.about-ver{font-size:13px;color:var(--muted);margin:2px 0 14px;font-variant-numeric:tabular-nums}
+.about ul{margin:6px 0 0;padding-left:20px} .about li{margin:5px 0}
+.about dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:10px 16px}
+.about dt{color:var(--muted);font-size:13px} .about dd{margin:0;overflow-wrap:anywhere}
+pre.log{margin:0;background:var(--surface);border-radius:20px;padding:14px;font:12px/1.55 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--ink)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ===== v1.5 layout: pages without bottom bar ===== */
+body{padding:env(safe-area-inset-top,0) 0 calc(28px + env(safe-area-inset-bottom,0))}
+.subbar{display:flex;align-items:center;gap:4px;padding:8px 10px 8px 6px;min-height:60px;position:sticky;top:0;background:var(--bg);z-index:5}
+.subbar h2{font-size:20px;font-weight:500;margin:0;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chan{position:relative;background:var(--surface);border-radius:24px;padding:16px;margin:0 0 12px;cursor:pointer;transition:background .15s}
+.chan:active{background:var(--tonal)}
+.chan-top{display:flex;align-items:center;gap:14px}
+.thumb{position:relative;width:64px;height:64px;border-radius:18px;background:var(--stage);flex:none;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.thumb img{width:100%;height:100%;object-fit:contain;visibility:hidden}
+.thumb .badge{position:absolute;left:4px;bottom:4px;width:22px;height:22px;border-radius:8px;background:var(--primary);color:var(--on-primary);display:flex;align-items:center;justify-content:center}
+.thumb .badge .ic{width:14px;height:14px}
+.chan-tx{flex:1;min-width:0}
+.chan-t{font-size:17px;font-weight:600}
+.chan-d{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chan-meta{margin-top:12px;padding-top:10px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+.mrow{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);min-width:0}
+.mrow span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mrow .ic{width:16px;height:16px}
+.chan-go{position:absolute;right:12px;bottom:12px;color:var(--muted)}
+.chan.off .thumb{opacity:.5}
+.framebox{background:var(--stage);border-radius:20px;height:170px;display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:12px}
+.framebox img{max-width:100%;max-height:100%;object-fit:contain;visibility:hidden}
+.fb-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.fb-row .fb-t{flex:1;min-width:0}
+.fb-name{font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fb-meta{font-size:13px;color:var(--muted)}
+.vlabel{margin-left:auto;font-variant-numeric:tabular-nums}
+.sheet-scrim{position:fixed;inset:0;z-index:55;background:rgba(8,12,18,.5);opacity:0;visibility:hidden;display:flex;align-items:flex-end;justify-content:center;transition:opacity .2s,visibility 0s linear .2s}
+.sheet-scrim.open{opacity:1;visibility:visible;transition:opacity .2s}
+.sheet{width:100%;max-width:560px;max-height:84vh;overflow:auto;background:var(--surface);border-radius:28px 28px 0 0;padding:10px 20px calc(20px + env(safe-area-inset-bottom,0));transform:translateY(28px);transition:transform .26s cubic-bezier(.2,.8,.2,1)}
+.sheet-scrim.open .sheet{transform:none}
+.grab{width:36px;height:4px;border-radius:2px;background:var(--line);margin:4px auto 12px}
+.sheet h3{margin:0 0 6px;font-size:18px;font-weight:600}
+.opt{display:flex;align-items:center;gap:14px;width:100%;text-align:left;border:0;background:none;padding:12px 4px;border-radius:14px;min-height:56px}
+.opt:active{background:var(--tonal)}
+.opt .rd{width:22px;height:22px;border-radius:50%;border:2px solid var(--muted);flex:none;position:relative}
+.opt[aria-checked="true"] .rd{border-color:var(--primary)}
+.opt[aria-checked="true"] .rd::after{content:"";position:absolute;inset:4px;border-radius:50%;background:var(--primary)}
+.opt .ot{font-size:15px} .opt .od{font-size:12px;color:var(--muted)}
+.sheet-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.fcard{position:relative;background:var(--surface);border-radius:20px;overflow:hidden;border:2px solid transparent;text-align:left;cursor:pointer}
+.fcard[aria-pressed="true"]{border-color:var(--primary)}
+.fcard .fimg{height:150px;background:var(--stage);display:flex;align-items:center;justify-content:center}
+.fcard .fimg img{max-width:100%;max-height:100%;object-fit:contain}
+.fcard .fb{padding:8px 12px 10px}
+.fcard .fchk{display:none;position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;border:2px solid var(--line);background:var(--surface);align-items:center;justify-content:center;color:transparent}
+.selmode .fcard .fchk{display:flex}
+.selmode .fcard[aria-pressed="true"]{border-color:var(--warn)}
+.selmode .fcard[aria-pressed="true"] .fchk{background:var(--warn);border-color:var(--warn);color:var(--on-primary)}
+.selbar{position:fixed;left:0;right:0;bottom:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:var(--bg);box-shadow:0 -1px 0 var(--line);z-index:6}
+.selbar .btn{width:100%}
+.selbar .btn:disabled{opacity:.5}
+.wrap.selmode{padding-bottom:88px}
+.fcard .fn{font-size:14px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;min-height:20px}
+.tag{font-size:11px;padding:2px 8px;border-radius:999px;background:var(--tonal);color:var(--muted)}
+.tag.on{background:var(--primary-c);color:var(--on-primary-c)}
+.fcal{position:absolute;top:6px;right:6px;width:40px;height:40px;border-radius:50%;border:0;background:var(--surface);box-shadow:0 1px 6px rgba(0,0,0,.28);display:flex;align-items:center;justify-content:center;color:var(--primary)}
+.addtile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:210px;border:2px dashed var(--line);border-radius:20px;background:none;color:var(--muted)}
+.addtile:active{background:var(--tonal)}
+.page.calib{height:100vh;height:100dvh;flex-direction:column}
+.page.calib.active{display:flex;animation:none}
+.stagebox{flex:0 0 auto;height:min(44vh,440px);min-height:190px;margin:0 12px;background:var(--stage);border-radius:20px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.stagebox canvas{display:block;touch-action:none;border-radius:4px}
+.stage-hint{position:absolute;left:10px;right:10px;bottom:6px;font-size:12px;color:var(--muted);text-align:center;pointer-events:none}
+.stage-hint.ok{color:#1b8a4b;font-size:13px;font-weight:700}
+.stagebox{transition:box-shadow .5s}
+.stagebox.fitflash{box-shadow:inset 0 0 0 3px #2e9e5b,inset 0 0 30px rgba(46,158,91,.5);transition:box-shadow .12s}
+.chips4 .chip.fit::after{content:'✓';margin-left:3px;color:#1b8a4b;font-weight:700}
+.tabs{display:flex;gap:6px;padding:10px 12px 6px;overflow-x:auto;flex:none}
+.tabs[hidden]{display:none}
+.tabs button{flex:1 0 auto;min-height:42px;padding:0 18px;border-radius:999px;border:1px solid var(--line);background:var(--surface)}
+.tabs button[aria-selected="true"]{background:var(--primary-c);color:var(--on-primary-c);border-color:transparent;font-weight:600}
+.panel{flex:1 1 auto;overflow:auto;padding:6px 16px calc(24px + env(safe-area-inset-bottom,0))}
+.crow{display:grid;grid-template-columns:1fr auto;align-items:center;margin-top:10px}
+.crow .cl{font-size:14px} .crow b{font-variant-numeric:tabular-nums}
+.crow .nudge{grid-column:1/-1;margin:2px 0 0}
+.chips4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px}
+.chips4 .chip{padding:0 4px;justify-content:center}
+.tbtn{height:40px;padding:0 14px;border:0;background:none;color:var(--primary);font-weight:600;border-radius:999px}
+.tbtn:disabled{color:var(--muted);opacity:.6}
+.tbtn:active{background:var(--tonal)}
+.row .inp{width:96px}
+.toast{bottom:calc(32px + env(safe-area-inset-bottom,0))}
+
+.pstep,.qstep{height:48px;border-radius:50%;border:0;background:var(--tonal);font-size:22px;line-height:1}
+.pstep:active,.qstep:active{filter:brightness(.93)}
+.link{background:none;color:var(--primary)}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11.5 12 4.5l8 7"/><path d="M6 10v9.5h4.5V14h3v5.5H18V10"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="2.8" width="10" height="18.4" rx="2.6"/><path d="M10.5 18h3"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></symbol>
+  <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="12" cy="5.5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="18.5" r="1.5"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M14.5 6 8.5 12l6 6"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9.5 6l6 6-6 6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4.5 7h15M9.5 7V5h5v2M6.5 7l.8 12h9.4l.8-12M10 11v5M14 11v5"/></symbol>
+  <symbol id="i-video" viewBox="0 0 24 24"><rect x="3.5" y="6.5" width="12" height="11" rx="2.5"/><path d="M15.5 10.5 20.5 8v8l-5-2.5"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 3 5.5 13.5H11L10 21l7.5-10.5H12z"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M4 7.5A1.5 1.5 0 0 1 5.5 6H10l2 2.2h6.5A1.5 1.5 0 0 1 20 9.7V17a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/></symbol>
+  <symbol id="i-res" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="2.5"/><path d="M8 9.5V8h2M16 14.5V16h-2"/></symbol>
+  <symbol id="i-screen" viewBox="0 0 24 24"><path d="M4 9V5.8A1.8 1.8 0 0 1 5.8 4H9M15 4h3.2A1.8 1.8 0 0 1 20 5.8V9M20 15v3.2a1.8 1.8 0 0 1-1.8 1.8H15M9 20H5.8A1.8 1.8 0 0 1 4 18.2V15"/><rect x="8.5" y="8.5" width="7" height="7" rx="1.6"/></symbol>
+  <symbol id="i-log" viewBox="0 0 24 24"><path d="M7 3.5h7l4 4V20.5H7z"/><path d="M14 3.5v4h4M9.5 12h5M9.5 15.5h5"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8v.1"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><rect x="5" y="3.5" width="14" height="17" rx="3"/><circle cx="12" cy="12" r="2.2"/></symbol>
+  <symbol id="i-sliders2" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="M4 17l5-4.5 3.5 3L15.5 13 20 17"/></symbol>
+</svg>
+
+<div id="app">
+
+  <!-- ============ 首页 ============ -->
+  <section class="page active" id="pg-home" aria-label="概览">
+    <div class="wrap">
+      <header class="appbar">
+        <h1>截图套壳</h1>
+        <div class="menuwrap">
+          <button class="iconbtn" id="menuBtn" aria-haspopup="menu" aria-expanded="false" aria-label="更多选项"><svg class="ic fill"><use href="#i-dots"/></svg></button>
+          <div class="menu" id="menu" role="menu" hidden>
+            <button role="menuitem" id="menuLog"><svg class="ic"><use href="#i-log"/></svg>运行日志</button>
+            <button role="menuitem" id="menuAbout"><svg class="ic"><use href="#i-info"/></svg>关于与使用须知</button>
+          </div>
+        </div>
+      </header>
+      <div class="banner" id="banner" hidden></div>
+      <div class="statusrow"><span class="status" id="status">正在读取状态…</span><span class="status" id="ffStatus" role="button" tabindex="0" hidden></span></div>
+      <div id="chanCards"></div>
+      <div class="card list-card" id="homeResCard">
+        <button class="lrow" id="rowScreen"><span class="li"><svg class="ic"><use href="#i-screen"/></svg></span><span class="lt"><span class="ll">屏幕分辨率</span><div class="lv" id="rowScreenV">—</div></span><svg class="ic sm lc"><use href="#i-chev"/></svg></button>
+      </div>
+      <div class="card empty" id="homeEmpty" hidden>
+        <svg class="ic big"><use href="#i-phone"/></svg>
+        <div class="et">还没有壳图</div>
+        <p class="ed">先添加一张机型壳图，再给截图和录屏各选一套。</p>
+        <button class="btn fill" id="homeAdd"><svg class="ic sm"><use href="#i-plus"/></svg>添加壳图</button>
+      </div>
+      <div class="card">
+        <div class="card-h">最近处理</div>
+        <div id="recent"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 截图 / 录屏 配置页 ============ -->
+  <section class="page" id="pg-chan" aria-label="套壳配置">
+    <div class="wrap">
+      <header class="subbar">
+        <button class="iconbtn backbtn" aria-label="返回"><svg class="ic"><use href="#i-back"/></svg></button>
+        <h2 id="chanTitle">截图套壳</h2>
+        <button class="switch" id="chanSwitch" role="switch" aria-checked="false" aria-label="开关"></button>
+      </header>
+      <div class="card">
+        <div class="framebox"><img id="chanImg" alt=""></div>
+        <div class="fb-row">
+          <div class="fb-t"><div class="fb-name" id="chanFrameName">—</div><div class="fb-meta" id="chanFrameMeta">—</div></div>
+          <button class="btn" id="chanSwap">更换壳图</button>
+        </div>
+        <button class="btn fill" id="chanCal" style="width:100%"><svg class="ic sm"><use href="#i-sliders2"/></svg>校准与预览</button>
+      </div>
+      <div class="card list-card">
+        <button class="lrow" id="rowDir"><span class="li"><svg class="ic"><use href="#i-folder"/></svg></span><span class="lt"><span class="ll" id="rowDirL">监听文件夹</span><div class="lv" id="rowDirV" style="white-space:pre-line">—</div></span><svg class="ic sm lc"><use href="#i-chev"/></svg></button>
+        <button class="lrow" id="rowRes"><span class="li"><svg class="ic"><use href="#i-res"/></svg></span><span class="lt"><span class="ll">输出方式</span><div class="lv" id="rowResV">—</div></span><svg class="ic sm lc"><use href="#i-chev"/></svg></button>
+        <button class="lrow" id="rowMode"><span class="li"><svg class="ic"><use href="#i-image"/></svg></span><span class="lt"><span class="ll">宽高比不一致时</span><div class="lv" id="rowModeV">—</div></span><svg class="ic sm lc"><use href="#i-chev"/></svg></button>
+        <button class="lrow" id="rowRot"><span class="li"><svg class="ic"><use href="#i-phone"/></svg></span><span class="lt"><span class="ll">横屏时壳图方向</span><div class="lv" id="rowRotV">—</div></span><svg class="ic sm lc"><use href="#i-chev"/></svg></button>
+      </div>
+      <div class="card">
+        <div class="card-h" id="chanRecentT">最近处理</div>
+        <div id="chanRecent"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 屏幕分辨率 ============ -->
+  <section class="page" id="pg-res" aria-label="屏幕分辨率">
+    <div class="wrap">
+      <header class="subbar">
+        <button class="iconbtn backbtn" aria-label="返回"><svg class="ic"><use href="#i-back"/></svg></button>
+        <h2>屏幕分辨率</h2>
+      </header>
+      <p class="small muted" style="margin:0 4px 12px">截图的分辨率与这里一致才会套壳，区域截图、长截图等尺寸不符的会被跳过；录屏按这里的宽高比匹配，不限分辨率。这是全局设置，截图、录屏和所有壳图共用。</p>
+      <div class="card resbox">
+        <div class="chips" id="resChips"></div>
+        <p class="small muted" id="resAutoInfo" style="margin-top:12px">—</p>
+        <div id="resManual" hidden>
+          <div class="row">
+            <input type="number" class="inp" id="resW" inputmode="numeric" min="1" aria-label="宽">
+            <span aria-hidden="true">×</span>
+            <input type="number" class="inp" id="resH" inputmode="numeric" min="1" aria-label="高">
+            <button class="btn" id="resDev">使用本机分辨率</button>
+          </div>
+          <p class="warn" id="resWarn" hidden></p>
+          <div class="row"><button class="btn fill" id="resSave">保存</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 选择壳图 ============ -->
+  <section class="page" id="pg-frames" aria-label="选择壳图">
+    <div class="wrap">
+      <header class="subbar">
+        <button class="iconbtn backbtn" aria-label="返回"><svg class="ic"><use href="#i-back"/></svg></button>
+        <h2 id="framesTitle">选择壳图</h2>
+        <button class="tbtn" id="framesAll" hidden>全选</button>
+        <button class="tbtn" id="framesSel">删除</button>
+      </header>
+      <p class="small muted" id="framesHint" style="margin:0 4px 12px">点壳图即选用；右上角的按钮进入校准与预览。</p>
+      <div class="grid" id="frameGrid"></div>
+    </div>
+    <div class="selbar" id="selBar" hidden><button class="btn warnfill" id="selDel" disabled><svg class="ic sm"><use href="#i-trash"/></svg><span id="selDelT">删除</span></button></div>
+  </section>
+
+  <!-- ============ 校准与预览 ============ -->
+  <section class="page calib" id="pg-calib" aria-label="校准与预览">
+    <header class="subbar" style="position:static">
+      <button class="iconbtn backbtn" aria-label="返回"><svg class="ic"><use href="#i-back"/></svg></button>
+      <h2 id="calTitle">校准</h2>
+      <button class="tbtn" id="calSave" disabled>保存</button>
+    </header>
+    <div class="stagebox" id="stageBox"><canvas id="cv"></canvas><div class="stage-hint" id="stageHint"></div></div>
+    <div class="tabs" id="calTabs" role="tablist"></div>
+    <div class="panel" id="calPanel">
+
+      <div id="pane-pos" hidden>
+        <div class="crow"><span class="cl">水平偏移</span><b id="vDx">0 px</b>
+          <div class="nudge"><button class="pstep" data-p="dx" data-d="-1" aria-label="水平减 1">−</button><input type="range" id="sDx" min="-60" max="60" step="1" value="0" aria-label="水平偏移"><button class="pstep" data-p="dx" data-d="1" aria-label="水平加 1">+</button></div></div>
+        <div class="crow"><span class="cl">垂直偏移</span><b id="vDy">0 px</b>
+          <div class="nudge"><button class="pstep" data-p="dy" data-d="-1" aria-label="垂直减 1">−</button><input type="range" id="sDy" min="-60" max="60" step="1" value="0" aria-label="垂直偏移"><button class="pstep" data-p="dy" data-d="1" aria-label="垂直加 1">+</button></div></div>
+        <div class="crow"><span class="cl">内容缩放</span><b id="vSc">100%</b>
+          <div class="nudge"><button class="pstep" data-p="scale" data-d="-1" aria-label="缩小 1%">−</button><input type="range" id="sSc" min="80" max="105" step="1" value="100" aria-label="内容缩放"><button class="pstep" data-p="scale" data-d="1" aria-label="放大 1%">+</button></div></div>
+        <p class="small muted" style="margin-top:6px">壳图的屏幕圆角比你的手机大时，状态栏的时间、电量会贴着边。把内容缩放调小一点，会留出黑边，让它们离开圆角。</p>
+        <label class="check"><input type="checkbox" id="guides">显示检测到的屏幕边界</label>
+        <p class="small muted" id="detectInfo" style="margin-top:10px">—</p>
+        <p class="warn" id="detectWarn" hidden></p>
+        <div class="row" style="margin-top:8px"><button class="btn" id="resetPos">重置位置和缩放</button></div>
+      </div>
+
+      <div id="pane-quad" hidden>
+        <p class="small muted" style="margin-top:4px">选一个角，拖动预览图上的圆点，或用下面的滑块微调。单位是壳图像素。</p>
+        <div class="chips4" id="cornerChips"></div>
+        <div class="crow"><span class="cl">X 轴坐标</span><b id="cxV">0</b>
+          <div class="nudge"><button class="qstep" data-c="x" data-d="-1" aria-label="X 减 1">−</button><input type="range" id="cx" min="0" max="1000" step="1" value="0" aria-label="X 坐标"><button class="qstep" data-c="x" data-d="1" aria-label="X 加 1">+</button></div></div>
+        <div class="crow"><span class="cl">Y 轴坐标</span><b id="cyV">0</b>
+          <div class="nudge"><button class="qstep" data-c="y" data-d="-1" aria-label="Y 减 1">−</button><input type="range" id="cy" min="0" max="1000" step="1" value="0" aria-label="Y 坐标"><button class="qstep" data-c="y" data-d="1" aria-label="Y 加 1">+</button></div></div>
+        <p class="small muted" id="quadInfo" style="margin-top:6px"></p>
+        <div class="row" style="margin-top:8px"><button class="btn" id="quadAuto">恢复自动检测</button></div>
+      </div>
+
+      <div id="pane-orient" hidden>
+        <div class="field-t">屏幕内容方向</div>
+        <p class="field-d">预览里的测试图带有“顶”字和箭头，方向不对就在这里选择旋转角度（顺时针）。</p>
+        <div class="chips" id="orientChips"></div>
+        <p class="small muted" id="topInfo" style="margin-top:10px"></p>
+      </div>
+
+    </div>
+  </section>
+</div>
+
+<!-- 底部弹层 -->
+<div class="sheet-scrim" id="sheetScrim" aria-hidden="true">
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <div class="grab"></div>
+    <h3 id="sheetTitle"></h3>
+    <div id="sheetBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<div class="scrim" id="scrim" aria-hidden="true">
+  <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="dlgTitle" aria-describedby="dlgBody">
+    <h2 id="dlgTitle"></h2>
+    <p class="small muted" id="dlgBody"></p>
+    <div class="dlg-actions">
+      <button class="btn text" id="dlgCancel">取消</button>
+      <button class="btn warnfill" id="dlgOk">删除</button>
+    </div>
+  </div>
+</div>
+
+<!-- 添加壳图 -->
+<div class="overlay" id="addPage" hidden role="dialog" aria-label="添加壳图">
+  <div class="overlay-bar"><button class="iconbtn" id="addBack" aria-label="返回"><svg class="ic"><use href="#i-back"/></svg></button><h2>添加壳图</h2></div>
+  <div class="ob">
+    <div class="card">
+      <div class="card-h">从文件管理器选择</div>
+      <p class="card-s">选择一张 PNG 壳图：屏幕区域透明，且被边框完全包围。普通的平面壳图和倾斜的 3D 样机图都可以。</p>
+      <button class="btn fill" id="pickBtn"><svg class="ic sm"><use href="#i-plus"/></svg>选择 PNG 文件</button>
+    </div>
+    <div class="card">
+      <div class="card-h">或者在手机存储里浏览</div>
+      <div id="brBody"></div>
+      <div id="freshBody"></div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="logPage" hidden role="dialog" aria-label="运行日志">
+  <div class="overlay-bar"><button class="iconbtn" id="logBack" aria-label="返回"><svg class="ic"><use href="#i-back"/></svg></button><h2>运行日志</h2><button class="btn text" id="logRefresh">刷新</button></div>
+  <div class="ob"><pre class="log" id="logText"></pre></div>
+</div>
+
+<div class="overlay about" id="about" hidden role="dialog" aria-label="关于">
+  <div class="overlay-bar"><button class="iconbtn" id="aboutBack" aria-label="返回"><svg class="ic"><use href="#i-back"/></svg></button><h2>关于与使用须知</h2></div>
+  <div class="ob">
+    <h3 class="about-title">截图套壳</h3>
+    <div class="about-ver" id="abVer">Screenshot Framer</div>
+    <p>自动监听系统截图和录屏，为全屏截图和全屏录屏套上设备外壳（支持平面壳图和 3D 透视壳图），并以原文件名在原位置保存。截图支持 PNG 和 JPG，录屏支持 MP4。</p>
+
+    <section class="card" style="margin-top:16px">
+      <div class="card-h">怎么用</div>
+      <ul>
+        <li>首页有“截图套壳”和“录屏套壳”两个入口，各自有开关；点进去可以单独选壳图、文件夹和输出方式，两边互不影响，可以用不同的壳图。</li>
+        <li>点“更换壳图”选择壳图，也可以在那里添加新的壳图；在“选择壳图”页点右上角“删除”，可以多选后批量删除。</li>
+        <li>“校准与预览”里可以微调壳图并实时看到效果：位置（水平、垂直偏移和内容缩放），以及 3D 透视壳图才有的四角和方向。校准完点右上角“保存”。</li>
+        <li>首页的“屏幕分辨率”是全局设置，默认自动匹配本机分辨率，一般不用改；想手动指定时，可以在里面输入并保存。</li>
+        <li>开关点一下立即生效；文件夹、输出方式等选项选定后立即保存。</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <div class="card-h">主要功能</div>
+      <ul>
+        <li>首页顶部显示监听服务和 FFmpeg 的状态，点 FFmpeg 状态可以看原因；FFmpeg 异常时录屏不会被处理，截图不受影响。</li>
+        <li>自动监听截图文件夹和录屏文件夹，截图后数秒内完成套壳并原位替换；录屏结束后自动处理。文件夹可自动检测或手动指定。</li>
+        <li>PNG 截图无损输出：截图像素 1:1 保留，不重新压缩；也可改为按壳图尺寸输出。JPG 截图套壳后以最高画质重新保存，壳图外的透明区域填白。</li>
+        <li>自动识别壳图的屏幕区域（含圆角与挖孔），画面不会溢出到圆角外。</li>
+        <li>支持 3D 透视壳图：自动检测屏幕四角（圆角再大也不会偏）和手机顶部（依据前置摄像头开孔），截图和录屏按透视变形贴进屏幕，手指遮挡处照样处理。</li>
+        <li>校准实时反馈：调整“四角”时，轮廓和圆点按偏差变色（绿色贴合、橙色略偏、红色偏得多）；四个角都贴合，或“位置”的水平、垂直偏移让内容边缘贴合屏幕时，预览区会闪一下绿色并轻振，同时提示“四角（四边）已贴合屏幕”。</li>
+        <li>3D 透视壳图的输出方式、宽高比处理和横屏时壳图方向都是固定的：输出为壳图尺寸、拉伸贴合屏幕四角、内容方向由校准页的“方向”决定。这几个选项会标注“3D透视壳图固定”，且不能更改。</li>
+        <li>壳图的屏幕圆角比你的手机大时，状态栏的时间和电量会贴着边；可以在“位置”里把“内容缩放”调小一点，留出黑边。</li>
+        <li>删除壳图时，正在使用它的截图或录屏会改用另一边当前选定的壳图；另一边没有选定壳图时留空，即自动匹配。</li>
+        <li>仅处理全屏截图和全屏录屏；区域截图、长截图等尺寸不符的会自动跳过。截图按“屏幕分辨率”匹配，录屏按宽高比匹配，任意录屏分辨率都可用。</li>
+        <li>支持横屏截图和横屏录屏；声音保留。</li>
+        <li>壳图在界面内导入，模块自动保存，无需手动创建文件夹。</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <div class="card-h">使用须知</div>
+      <ul>
+        <li>套壳会直接替换原截图和录屏，原文件无法恢复。</li>
+        <li>录屏套壳需要重新编码视频，耗时与录屏时长、分辨率相关；处理期间请勿删除或移动该录屏。处理进度和结果可在首页“最近处理”和“运行日志”中查看。仅处理 MP4。</li>
+        <li>需要 root 权限，设备架构为 arm64。</li>
+        <li>支持的管理器：KernelSU 及其衍生版（如 KernelSU Next、SukiSU Ultra）、APatch，可直接在管理器中打开本界面；Magisk 自身没有模块界面，需借助 MMRL 等支持 WebUI 的工具打开。目前仅在 KernelSU 上测试，其他管理器未逐一验证。</li>
+        <li>模块不自带壳图，请自备你机型的壳图：PNG 格式，屏幕区域透明，且被边框完全包围。</li>
+        <li>升级模块会保留设置和壳图。卸载模块不会自动清理数据目录，如需彻底清除，请手动删除 /data/adb/screenshot_frame。</li>
+        <li>套壳没有反应时，先查看“运行日志”；监听服务异常时，请重启手机。</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <div class="card-h">信息</div>
+      <dl>
+        <dt>作者</dt><dd>酷安_@裤子里又硬又烫原来是我的手机</dd>
+        <dt>GitHub</dt><dd><a class="lnk" id="abGit" href="https://github.com/PC-ZXJ/screenshot_frame-">@PC-ZXJ</a></dd>
+        <dt>版本</dt><dd id="abVer2">—</dd>
+        <dt>数据目录</dt><dd>/data/adb/screenshot_frame</dd>
+        <dt>运行日志</dt><dd>/data/adb/screenshot_frame/log.txt</dd>
+        <dt>第三方组件</dt><dd>LodePNG（zlib 许可）：PNG 编解码；stb_image、stb_image_write（公有领域）：JPG 编解码；FFmpeg：录屏处理</dd>
+      </dl>
+    </section>
+  </div>
+</div>
+<input type="file" id="picker" accept="image/png,.png" hidden>
+
+<script>
+(() => {
+'use strict';
+const MOD = '/data/adb/modules/screenshot_frame';
+const DATA = '/data/adb/screenshot_frame';
+const BIN = DATA + '/bin/frame';
+const $ = id => document.getElementById(id);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/* ---------- helpers (pure) ---------- */
+const q = s => "'" + String(s).replace(/'/g, "'\\''") + "'";
+function unq(v) {
+  v = v.trim();
+  if (v.length >= 2 && v[0] === "'" && v[v.length - 1] === "'") return v.slice(1, -1).replace(/'\\''/g, "'");
+  if (v.length >= 2 && v[0] === '"' && v[v.length - 1] === '"') return v.slice(1, -1);
+  return v;
+}
+function parseKV(text) {
+  const o = {};
+  for (const line of String(text).split('\n')) {
+    const t = line.trim();
+    if (!t || t[0] === '#') continue;
+    const i = t.indexOf('=');
+    if (i < 1) continue;
+    o[t.slice(0, i).trim()] = unq(t.slice(i + 1));
+  }
+  return o;
+}
+function parseSections(text) {
+  const sec = {}; let cur = null;
+  for (const line of String(text).split('\n')) {
+    if (line.startsWith('##')) { cur = line.slice(2).trim(); sec[cur] = []; continue; }
+    if (cur !== null) sec[cur].push(line);
+  }
+  return sec;
+}
+function safeName(file) { return file.replace(/\.png$/i, '').replace(/[^A-Za-z0-9_.+-]/g, '_') || 'frame'; }
+function hash(s) { let h = 5381; for (const c of s) h = ((h * 33) ^ c.codePointAt(0)) >>> 0; return h.toString(36); }
+function parseQuad(s) { const a = String(s || '').split(',').map(Number); return a.length === 8 && a.every(Number.isFinite) ? a : null; }
+const CFG_KEYS = ['screen_res', 'shot_frame', 'shot_res', 'shot_mode', 'shot_rot', 'rec_frame', 'rec_res', 'rec_mode', 'rec_rot'];
+function serializeConfig(c) {
+  return ['# Screenshot Framer config (key=value)',
+    'enabled=' + (c.enabled === '0' ? '0' : '1'),
+    'watch_dir=' + q(c.watch_dir), 'frames_dir=' + q(c.frames_dir),
+    'res=' + q(c.res || 'native'), 'mode=' + q(c.mode || 'cover'), 'rot=' + q(c.rot || 'ccw'),
+    'active=' + q(c.active || ''),
+    'rec_enabled=' + (c.rec_enabled === '1' ? '1' : '0'), 'rec_dir=' + q(c.rec_dir || '')]
+    .concat(CFG_KEYS.map(k => k + '=' + q(c[k] || '')), ['']).join('\n');
+}
+function serializeProfile(p) {
+  const lines = ['frame=' + q(p.frame), 'dx=' + (parseInt(p.dx, 10) || 0), 'dy=' + (parseInt(p.dy, 10) || 0)];
+  const sc = parseFloat(p.scale);
+  if (sc > 0.5 && sc < 1.5 && Math.abs(sc - 1) > 0.0005) lines.push('scale=' + (Math.round(sc * 1000) / 1000));
+  if (parseQuad(p.quad)) lines.push('quad=' + parseQuad(p.quad).map(n => Math.round(n * 10) / 10).join(','));
+  if (['0', '90', '180', '270'].includes(String(p.orient))) lines.push('orient=' + p.orient);
+  return lines.join('\n') + '\n';
+}
+function parseDevSize(lines) {
+  let w = 0, h = 0;
+  for (const l of lines) { const m = l.match(/(\d+)\s*x\s*(\d+)/); if (m) { w = +m[1]; h = +m[2]; } }
+  return w ? { w, h } : null;
+}
+function fmtSize(n) {
+  n = +n || 0;
+  return n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB';
+}
+function b64(bytes) {
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 8192) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192));
+  return btoa(bin);
+}
+const isPng = b => b.length > 24 && b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4E && b[3] === 0x47;
+const normDir = v => String(v || '').trim().replace(/\/+$/, '');
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+/* ---------- geometry (mirrors frame.c) ---------- */
+function quadSize(p) {
+  const d = (a, b) => Math.hypot(p[b * 2] - p[a * 2], p[b * 2 + 1] - p[a * 2 + 1]);
+  return { w: (d(0, 1) + d(3, 2)) / 2, h: (d(0, 3) + d(1, 2)) / 2 };
+}
+function quadLandscape(qd) { const s = quadSize(qd); return s.w > s.h; }
+function xformQuad(qd, dx, dy, scale, grow) {
+  let cx = 0, cy = 0;
+  for (let i = 0; i < 4; i++) { cx += qd[i * 2]; cy += qd[i * 2 + 1]; }
+  cx /= 4; cy /= 4;
+  const s = quadSize(qd), k = scale * (1 + grow / (0.5 * Math.min(s.w, s.h)));
+  const out = [];
+  for (let i = 0; i < 4; i++) out.push([cx + (qd[i * 2] - cx) * k + dx, cy + (qd[i * 2 + 1] - cy) * k + dy]);
+  return out;
+}
+function homographyRect(w, h, dst) {
+  const sx = [0, w, w, 0], sy = [0, 0, h, h], A = [];
+  for (let i = 0; i < 4; i++) {
+    const X = sx[i], Y = sy[i], u = dst[i][0], v = dst[i][1];
+    A.push([X, Y, 1, 0, 0, 0, -u * X, -u * Y, u]);
+    A.push([0, 0, 0, X, Y, 1, -v * X, -v * Y, v]);
+  }
+  for (let c = 0; c < 8; c++) {
+    let p = c;
+    for (let r = c + 1; r < 8; r++) if (Math.abs(A[r][c]) > Math.abs(A[p][c])) p = r;
+    if (Math.abs(A[p][c]) < 1e-12) return null;
+    [A[c], A[p]] = [A[p], A[c]];
+    for (let r = 0; r < 8; r++) {
+      if (r === c) continue;
+      const f = A[r][c] / A[c][c];
+      for (let k = c; k < 9; k++) A[r][k] -= f * A[c][k];
+    }
+  }
+  const m = []; for (let i = 0; i < 8; i++) m.push(A[i][8] / A[i][i]);
+  m.push(1); return m;
+}
+function inv3(m) {
+  const [a, b, c, d, e, f, g, h, i] = m;
+  const det = a * (e * i - f * h) - b * (d * i - f * g) + c * (d * h - e * g);
+  if (Math.abs(det) < 1e-18) return null;
+  return [(e * i - f * h) / det, (c * h - b * i) / det, (b * f - c * e) / det,
+    (f * g - d * i) / det, (a * i - c * g) / det, (c * d - a * f) / det,
+    (d * h - e * g) / det, (b * g - a * h) / det, (a * e - b * d) / det];
+}
+
+/* ---------- shell bridge ---------- */
+function exec(cmd) {
+  return new Promise((resolve, reject) => {
+    if (typeof ksu === 'undefined' || !ksu.exec) { reject(new Error('no-ksu')); return; }
+    const cb = 'sf_cb_' + Date.now() + '_' + Math.floor(Math.random() * 1e6);
+    window[cb] = (errno, stdout, stderr) => { delete window[cb]; resolve({ errno, stdout: stdout || '', stderr: stderr || '' }); };
+    try { ksu.exec(cmd, '{}', cb); } catch (e) { delete window[cb]; reject(e); }
+  });
+}
+async function writeFile(path, text) {
+  const r = await exec('echo ' + b64(new TextEncoder().encode(text)) + ' | base64 -d > ' + q(path + '.tmp') + ' && mv -f ' + q(path + '.tmp') + ' ' + q(path));
+  if (r.errno !== 0) throw new Error(r.stderr || '写入失败');
+}
+
+/* ---------- state ---------- */
+const DEFAULT_CFG = { enabled: '1', watch_dir: '/sdcard/Pictures/Screenshots', frames_dir: DATA + '/frames', res: 'native', mode: 'cover', rot: 'ccw', active: '', rec_enabled: '0', rec_dir: '', screen_res: '' };
+let cfg = {}, profiles = {}, frames = [], dev = null, running = false, hasBin = false, hasFF = false, ffState = 0, recDirs = [], mprop = {}, logLines = [];
+const frameInfo = {};                       // name -> { safe, ver, cached, dp, detect, img, err }
+const ctx = { kind: 'shot' };               // channel being configured
+const stack = ['home'];
+let calName = null, calDirty = false, calTab = 'pos', selCorner = 0;
+
+const CH = {
+  shot: { key: 'shot', title: '截图套壳', noun: '截图', icon: 'bolt', enKey: 'enabled', dirKey: 'watch_dir', frameKey: 'shot_frame' },
+  rec: { key: 'rec', title: '录屏套壳', noun: '录屏', icon: 'video', enKey: 'rec_enabled', dirKey: 'rec_dir', frameKey: 'rec_frame' }
+};
+const OPTS = {
+  res: { title: '输出方式', list: [['native', '保持原始分辨率', '截图或录屏的像素 1:1 保留，壳图按需放大'], ['frame', '壳图尺寸', '按壳图 PNG 的尺寸输出，内容会被缩放']] },
+  mode: { title: '宽高比不一致时', list: [['cover', '等比填充', '保持比例铺满屏幕，超出的边缘被裁掉'], ['stretch', '拉伸填充', '拉伸到刚好铺满屏幕，不裁切']] },
+  rot: { title: '横屏时壳图方向', list: [['ccw', '逆时针 90°', '横屏时摄像头在左侧'], ['cw', '顺时针 90°', '横屏时摄像头在右侧']] }
+};
+const OPT_DEF = { res: 'native', mode: 'cover', rot: 'ccw' };
+const chEnabled = c => (c.key === 'shot' ? cfg.enabled !== '0' : cfg.rec_enabled === '1');
+function chFrame(c) {
+  const n = cfg[c.frameKey];
+  if (n && profiles[n]) return n;
+  if (cfg.active && profiles[cfg.active]) return cfg.active;
+  return Object.keys(profiles)[0] || null;
+}
+const chOpt = (c, k) => cfg[c.key + '_' + k] || cfg[k] || OPT_DEF[k];
+const optLabel = (k, v) => { const o = OPTS[k].list.find(x => x[0] === v); return o ? o[1] : v; };
+function recFolderText() { return cfg.rec_dir ? cfg.rec_dir : recDirs.length ? recDirs.join('\n') : '自动检测（还没有找到录屏文件夹）'; }
+const chFolderText = c => (c.key === 'shot' ? cfg.watch_dir : recFolderText());
+
+const GATHER = [
+  'cd ' + DATA + ' 2>/dev/null || exit 0',
+  "echo; echo '##config'; cat config 2>/dev/null",
+  'for p in profiles/*.conf; do [ -f "$p" ] || continue; echo; echo "##profile $(basename "$p" .conf)"; cat "$p"; done',
+  '. ./config 2>/dev/null',
+  "echo; echo '##frames'; ls -1 \"$frames_dir\" 2>/dev/null",
+  "echo; echo '##wm'; wm size 2>/dev/null",
+  "echo; echo '##running'; pidof inotifyd >/dev/null 2>&1 && echo 1 || echo 0",
+  "echo; echo '##bin'; [ -x " + BIN + " ] && echo 1 || echo 0",
+  "echo; echo '##recdirs'; sh " + MOD + "/recdirs.sh",
+  "echo; echo '##ffmpeg'; ffd=; lib=; for d in " + DATA + "/bin/ffmpeg " + MOD + "/bin/ffmpeg; do if [ -x \"$d/ffmpeg\" ] && [ -x \"$d/ffprobe\" ]; then ffd=$d; lib=$d/lib; break; fi; done; t=/data/data/com.termux/files/usr; if [ -z \"$ffd\" ] && [ -x $t/bin/ffmpeg ] && [ -x $t/bin/ffprobe ]; then ffd=$t/bin; lib=$t/lib; fi; r=0; if [ -n \"$ffd\" ]; then if LD_LIBRARY_PATH=\"$lib\" \"$ffd/ffmpeg\" -hide_banner -version >/dev/null 2>&1; then if LD_LIBRARY_PATH=\"$lib\" \"$ffd/ffmpeg\" -hide_banner -encoders 2>/dev/null | grep -q libx264; then r=1; else r=3; fi; else r=2; fi; fi; echo $r",
+  "echo; echo '##prop'; cat " + MOD + "/module.prop 2>/dev/null",
+  "echo; echo '##log'; tail -n 80 " + DATA + "/log.txt 2>/dev/null"
+].join('\n');
+
+/* ---------- small DOM helpers ---------- */
+function el(tag, attrs, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else e.setAttribute(k, v);
+  }
+  for (const kid of kids) if (kid !== null && kid !== undefined && kid !== false) e.append(kid);
+  return e;
+}
+function icon(name) {
+  const ns = 'http://www.w3.org/2000/svg';
+  const s = document.createElementNS(ns, 'svg'); s.setAttribute('class', 'ic sm');
+  const u = document.createElementNS(ns, 'use'); u.setAttribute('href', '#i-' + name); s.append(u); return s;
+}
+function toast(msg) {
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2600);
+}
+function showBanner(msg) { const b = $('banner'); b.textContent = msg; b.hidden = !msg; }
+const framePath = p => (p.frame[0] === '/' ? p.frame : cfg.frames_dir.replace(/\/$/, '') + '/' + p.frame);
+/* The screen resolution is one global setting: the manual value if there is one, otherwise the device's own. */
+function screenRes() {
+  const m = /^(\d+)x(\d+)$/.exec(cfg.screen_res || '');
+  if (m && +m[1] > 0 && +m[2] > 0) return { w: +m[1], h: +m[2], manual: true };
+  return dev ? { w: dev.w, h: dev.h, manual: false } : { w: 1080, h: 2340, manual: false };
+}
+const refSize = () => screenRes();
+const sgn = n => (n > 0 ? '+' : n < 0 ? '−' : '') + Math.abs(n) + ' px';
+const scaleOf = p => { const s = parseFloat(p.scale); return s > 0.5 && s < 1.5 ? s : 1; };
+function isPersp(p, det) { return !!(p && (parseQuad(p.quad) || (det && det.persp === 1))); }
+function quadOf(p, det) { return parseQuad(p.quad) || parseQuad(det && det.quad); }
+
+/* ---------- loading ---------- */
+async function refresh() {
+  const r = await exec(GATHER);
+  const s = parseSections(r.stdout);
+  cfg = Object.assign({}, DEFAULT_CFG, parseKV((s.config || []).join('\n')));
+  profiles = {};
+  for (const k of Object.keys(s)) if (k.startsWith('profile ')) profiles[k.slice(8).trim()] = parseKV(s[k].join('\n'));
+  frames = (s.frames || []).map(x => x.trim()).filter(x => /\.png$/i.test(x));
+  dev = parseDevSize(s.wm || []);
+  running = (s.running || []).join('').trim() === '1';
+  hasBin = (s.bin || []).join('').trim() === '1';
+  ffState = parseInt((s.ffmpeg || []).join('').trim(), 10) || 0; hasFF = ffState === 1;
+  recDirs = (s.recdirs || []).map(x => x.trim()).filter(Boolean);
+  mprop = parseKV((s.prop || []).join('\n'));
+  logLines = s.log || [];
+  renderAll();
+}
+async function saveConfig(restart) {
+  try { await writeFile(DATA + '/config', serializeConfig(cfg)); } catch (e) { toast('保存失败：' + e.message); throw e; }
+  if (!restart) return;
+  await exec('sh ' + q(MOD + '/watch.sh'));
+  await sleep(600);
+  const rr = await exec('pidof inotifyd >/dev/null 2>&1 && echo 1 || echo 0');
+  running = rr.stdout.trim() === '1';
+  const dr = await exec('sh ' + q(MOD + '/recdirs.sh'));
+  recDirs = dr.stdout.split('\n').map(x => x.trim()).filter(Boolean);
+}
+
+/* ---------- frame cache + detection ---------- */
+async function ensureCache(name) {
+  const p = profiles[name]; if (!p) return null;
+  const info = frameInfo[name] || (frameInfo[name] = {});
+  const safe = 'f_' + hash(p.frame) + '.png';
+  if (info.cached && info.safe === safe) return safe;
+  const c = await exec('mkdir -p ' + q(MOD + '/webroot/cache') + ' && cp -f ' + q(framePath(p)) + ' ' + q(MOD + '/webroot/cache/' + safe));
+  if (c.errno !== 0) { info.cached = false; return null; }
+  info.safe = safe; info.cached = true; info.ver = info.ver || Date.now();
+  return safe;
+}
+function setThumb(img, name) {
+  if (!name) { img.removeAttribute('src'); img.style.visibility = 'hidden'; return; }
+  ensureCache(name).then(safe => {
+    if (!safe) return;
+    img.src = 'cache/' + safe + '?v=' + frameInfo[name].ver; img.style.visibility = 'visible';
+  }).catch(() => {});
+}
+function loadImg(src) {
+  return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('壳图加载失败')); i.src = src; });
+}
+function ensureDetect(name, force) {
+  const p = profiles[name]; if (!p) return Promise.resolve(null);
+  const info = frameInfo[name] || (frameInfo[name] = {});
+  if (info.dp && !force) return info.dp;
+  info.dp = (async () => {
+    const safe = await ensureCache(name);
+    if (!safe) { info.err = '壳图文件不存在：' + framePath(p); info.detect = null; return info; }
+    const rs = refSize(p);
+    const d = await exec(q(BIN) + ' detect ' + q(framePath(p)) + ' ' + rs.w + ' ' + rs.h);
+    if (d.errno !== 0) { info.err = '未检测到屏幕区域。壳图的屏幕部分必须为透明，且被边框完全包围。'; info.detect = null; return info; }
+    const det = {};
+    for (const [k, v] of Object.entries(parseKV(d.stdout))) det[k] = k === 'quad' ? v : +v;
+    info.detect = det; info.err = '';
+    try { info.img = await loadImg('cache/' + safe + '?v=' + info.ver); } catch (e) { info.img = null; info.err = e.message; }
+    return info;
+  })();
+  return info.dp;
+}
+const frameType = (name) => { const i = frameInfo[name]; return i && i.detect ? (isPersp(profiles[name], i.detect) ? '3D 透视' : '平面') : ''; };
+
+/* ---------- recent processing ---------- */
+function parseLog(lines) {
+  const out = [];
+  for (const l of lines) {
+    let m = l.match(/^(\d{4})-(\d\d)-(\d\d) (\d\d:\d\d):\d\d (rec )?(framed|skipped|working) (.+?) \((\d+x\d+)\)(?: with (.+)|: (.*))?$/);
+    if (m) { out.push({ when: m[2] + '-' + m[3] + ' ' + m[4], rec: !!m[5], kind: m[6], name: m[7], size: m[8], extra: m[9] || m[10] || '' }); continue; }
+    m = l.match(/^(\d{4})-(\d\d)-(\d\d) (\d\d:\d\d):\d\d (rec )?failed (.+?): (.*)$/);
+    if (m) { out.push({ when: m[2] + '-' + m[3] + ' ' + m[4], rec: !!m[5], kind: 'failed', name: m[6], size: '', extra: m[7] }); continue; }
+    m = l.match(/^(\d{4})-(\d\d)-(\d\d) (\d\d:\d\d):\d\d (compose failed.*)$/);
+    if (m) out.push({ when: m[2] + '-' + m[3] + ' ' + m[4], rec: false, kind: 'failed', name: '', size: '', extra: m[5] });
+  }
+  // an item that already finished (or failed) no longer shows as "processing"
+  return out.filter((it, i) => !(it.kind === 'working' && out.slice(i + 1).some(o => o.name === it.name && o.kind !== 'working')));
+}
+function renderRecent(id, opts) {
+  const o = opts || {}, box = $(id); box.textContent = '';
+  let items = parseLog(logLines);
+  if (o.kind === 'rec') items = items.filter(i => i.rec); else if (o.kind === 'shot') items = items.filter(i => !i.rec);
+  items = items.slice(-(o.limit || 5)).reverse();
+  if (!items.length) { box.append(el('p', { class: 'small muted' }, o.kind === 'rec' ? '还没有录屏处理记录。录一段全屏录屏试试。' : o.kind === 'shot' ? '还没有截图处理记录。截一张全屏截图试试。' : '还没有处理记录。截一张全屏截图或录一段屏试试。')); return; }
+  for (const it of items) {
+    const pill = it.kind === 'framed' ? ['已套壳', 'ok'] : it.kind === 'skipped' ? ['已跳过', ''] : it.kind === 'working' ? ['处理中', ''] : ['失败', 'bad'];
+    let note;
+    if (it.kind === 'framed') note = it.size + '，' + it.extra;
+    else if (it.kind === 'skipped') note = it.size + '，' + (it.rec ? it.extra : '尺寸不是全屏');
+    else if (it.kind === 'working') note = it.size + '，' + it.extra;
+    else note = it.extra;
+    box.append(el('div', { class: 'recent-row' },
+      el('div', { class: 'rn' }, el('div', { class: 'rname' }, it.name || '处理失败'), el('div', { class: 'rtime' }, it.when + '，' + (it.rec ? '录屏，' : '') + note)),
+      el('span', { class: 'pill ' + pill[1] }, pill[0])));
+  }
+}
+async function refreshRecent() {
+  if (document.hidden || !$('logPage').hidden) return;
+  const top = stack[stack.length - 1];
+  if (top !== 'home' && top !== 'chan') return;
+  try {
+    const r = await exec('tail -n 80 ' + q(DATA + '/log.txt') + ' 2>/dev/null');
+    const lines = r.stdout.split('\n');
+    if (lines.join('\n') !== logLines.join('\n')) { logLines = lines; renderCurrent(); }
+  } catch (e) { /* ignore */ }
+}
+
+/* ---------- rendering: home ---------- */
+function matchLine(c, name) {
+  const p = profiles[name]; if (!p) return '';
+  const r = refSize(p);
+  return c.key === 'shot' ? ' · 匹配 ' + r.w + '×' + r.h : ' · 按宽高比匹配';
+}
+function chanCard(c) {
+  const name = chFrame(c), on = chEnabled(c);
+  const img = el('img', { alt: '' });
+  setThumb(img, name);
+  let desc;
+  if (!on) desc = '已关闭，' + c.noun + '不会被处理';
+  else if (c.key === 'rec' && !hasFF) desc = '缺少视频处理组件，请重新安装模块';
+  else desc = name ? name + matchLine(c, name) : '还没有选择壳图';
+  const sw = el('button', { class: 'switch', role: 'switch', 'aria-checked': String(on), 'aria-label': c.title, onclick: e => { e.stopPropagation(); toggleChannel(c); } });
+  const folderRow = el('div', { class: 'mrow' }, icon('folder'), el('span', {}, chFolderText(c).replace(/\n/g, ' · ')));
+  const outRow = el('div', { class: 'mrow' }, icon('res'), el('span', {}, optLabel('res', chOpt(c, 'res')) + ' · ' + optLabel('mode', chOpt(c, 'mode'))));
+  return el('div', { class: 'chan' + (on ? '' : ' off'), role: 'button', tabindex: '0', onclick: () => openChan(c.key) },
+    el('div', { class: 'chan-top' },
+      el('div', { class: 'thumb' }, img, el('span', { class: 'badge' }, icon(c.icon))),
+      el('div', { class: 'chan-tx' }, el('div', { class: 'chan-t' }, c.title), el('div', { class: 'chan-d' }, desc)),
+      sw),
+    el('div', { class: 'chan-meta' }, folderRow, outRow),
+    el('span', { class: 'chan-go' }, icon('chev')));
+}
+function renderHome() {
+  const st = $('status');
+  if (!hasBin) { st.textContent = '缺少核心程序'; st.className = 'status bad'; }
+  else if (running) { st.textContent = '监听服务运行中'; st.className = 'status ok'; }
+  else { st.textContent = '监听服务未运行，重启手机后生效'; st.className = 'status bad'; }
+  { const fs = $('ffStatus'); fs.hidden = false;
+    fs.textContent = ffState === 1 ? 'FFmpeg 正常' : ffState === 2 ? 'FFmpeg 无法运行' : ffState === 3 ? 'FFmpeg 缺少编码器' : 'FFmpeg 缺失';
+    fs.className = 'status ' + (ffState === 1 ? 'ok' : 'bad'); }
+  showBanner(hasBin ? '' : '核心程序缺失，请重新安装模块。');
+  const none = Object.keys(profiles).length === 0;
+  $('homeEmpty').hidden = !none;
+  const box = $('chanCards'); box.textContent = ''; box.hidden = none;
+  if (!none) { box.append(chanCard(CH.shot)); box.append(chanCard(CH.rec)); }
+  renderRecent('recent', { limit: 5 });
+  { const sr = screenRes(); $('rowScreenV').textContent = sr.manual ? sr.w + '×' + sr.h + '（手动）' : '自动匹配' + (dev ? ' · ' + dev.w + '×' + dev.h : ''); }
+  const ver = mprop.version || '';
+  $('abVer').textContent = 'Screenshot Framer  ' + ver;
+  $('abVer2').textContent = ver ? ver + (mprop.versionCode ? '（' + mprop.versionCode + '）' : '') : '—';
+}
+async function toggleChannel(c) {
+  const on = chEnabled(c);
+  if (c.key === 'shot') cfg.enabled = on ? '0' : '1'; else cfg.rec_enabled = on ? '0' : '1';
+  renderCurrent();
+  try { await saveConfig(false); toast(c.title + (on ? '已关闭' : '已开启')); } catch (e) { /* toast shown */ }
+}
+
+/* ---------- rendering: channel page ---------- */
+/* Which of the channel's settings a 3D (perspective) frame overrides. */
+function chanState(c) {
+  const name = chFrame(c), info = name && frameInfo[name], det = info && info.detect, prof = name && profiles[name];
+  const persp = !!(det && isPersp(prof, det));
+  return { name, persp };
+}
+const LOCK_TEXT = {
+  res: '当前使用的是 3D透视壳图，输出尺寸强制使用壳图自身的尺寸，这一项不能更改。换成平面壳图后，才可以选择“保持原始分辨率”。',
+  mode: '3D透视壳图会把整张画面按透视变形贴进屏幕四角，相当于拉伸填充，这一项不能更改。换成平面壳图后，才可以选择“等比填充”。',
+  rot: '3D透视壳图的内容方向由校准页的“方向”决定：选“自动”时按检测到的手机顶部摆正，横屏的截图和录屏再逆时针转 90°，无法判断手机顶部时也按逆时针 90° 处理；不对就在校准页手动选择角度。所以这一项不起作用，不能更改。'
+};
+function openChanOpt(k) {
+  const c = CH[ctx.kind], st = chanState(c);
+  if (st.persp) {
+    openSheet(OPTS[k].title, body => body.append(el('p', { class: 'field-d', style: 'margin:0 0 14px' }, LOCK_TEXT[k]),
+      el('button', { class: 'btn fill', style: 'width:100%', onclick: closeSheet }, '知道了')));
+  } else openOptionSheet(c, k);
+}
+function renderChan() {
+  const c = CH[ctx.kind], name = chFrame(c), on = chEnabled(c);
+  $('chanTitle').textContent = c.title;
+  $('chanSwitch').setAttribute('aria-checked', String(on));
+  setThumb($('chanImg'), name);
+  $('chanFrameName').textContent = name || '还没有选择壳图';
+  const info = name && frameInfo[name];
+  if (name && (!info || !info.dp)) ensureDetect(name).then(() => { if (stack[stack.length - 1] === 'chan') renderChan(); });
+  $('chanFrameMeta').textContent = !name ? '点“更换壳图”选择或添加' : (info && info.detect ? frameType(name) + ' · ' + info.detect.fw + '×' + info.detect.fh : (info && info.err ? info.err : '正在读取…'));
+  $('rowDirL').textContent = c.noun + '文件夹';
+  $('rowDirV').textContent = chFolderText(c);
+  const st = chanState(c), persp = st.persp;
+  $('rowResV').textContent = persp ? '壳图尺寸（3D透视壳图固定）' : optLabel('res', chOpt(c, 'res'));
+  $('rowModeV').textContent = persp ? '拉伸填充（3D透视壳图固定）' : optLabel('mode', chOpt(c, 'mode'));
+  $('rowRotV').textContent = persp ? '按校准页“方向”（3D透视壳图固定）' : optLabel('rot', chOpt(c, 'rot'));
+  $('rowRes').classList.toggle('locked', persp); $('rowMode').classList.toggle('locked', persp); $('rowRot').classList.toggle('locked', persp);
+  $('chanRecentT').textContent = '最近处理（' + c.noun + '）';
+  renderRecent('chanRecent', { kind: c.key, limit: 3 });
+}
+function renderAll() { renderHome(); renderCurrent(); }
+function renderCurrent() {
+  const top = stack[stack.length - 1];
+  if (top === 'home') renderHome(); else if (top === 'chan') renderChan(); else if (top === 'frames') renderFrames(); else if (top === 'res') renderRes();
+}
+
+/* ---------- navigation ---------- */
+function show(name) {
+  for (const p of document.querySelectorAll('.page')) p.classList.toggle('active', p.id === 'pg-' + name);
+  window.scrollTo(0, 0);
+  if (name === 'calib') requestAnimationFrame(drawPreview);
+}
+function go(name) {
+  stack.push(name);
+  try { history.pushState({ s: stack.length }, ''); } catch (e) { /* ignore */ }
+  show(name);
+}
+let backBusy = false;
+async function goBack(fromPop) {
+  if (backBusy || stack.length <= 1) return;
+  backBusy = true;
+  try {
+    if (stack[stack.length - 1] === 'frames' && selMode) {      // back leaves multi-select first
+      setSelMode(false);
+      if (fromPop) { try { history.pushState({ s: stack.length }, ''); } catch (e) { /* ignore */ } }
+      return;
+    }
+    if (stack[stack.length - 1] === 'calib' && calDirty) {
+      const ok = await askConfirm('放弃未保存的更改？', '这套壳图的校准还没有保存，返回会丢失这些修改。', '放弃更改');
+      if (!ok) { if (fromPop) { try { history.pushState({ s: stack.length }, ''); } catch (e) { /* ignore */ } } return; }
+      calDirty = false;
+      await refresh();
+    }
+    stack.pop(); show(stack[stack.length - 1]); renderCurrent();
+  } finally { backBusy = false; }
+}
+function uiBack() {
+  const n = stack.length; if (n <= 1) return;
+  try { history.back(); } catch (e) { /* ignore */ }
+  setTimeout(() => { if (stack.length === n && !backBusy) goBack(false); }, 180);
+}
+function openChan(kind) { ctx.kind = kind; renderChan(); go('chan'); }
+function openFrames(kind) { ctx.kind = kind; selMode = false; selSet.clear(); renderFrames(); go('frames'); }
+
+/* ---------- frame library ---------- */
+let selMode = false; const selSet = new Set();
+function setSelMode(on) { selMode = on; selSet.clear(); renderFrames(); }
+function refreshSel() {
+  const names = Object.keys(profiles);
+  for (const n of [...selSet]) if (!profiles[n]) selSet.delete(n);
+  $('framesTitle').textContent = selMode ? (selSet.size ? '已选择 ' + selSet.size + ' 项' : '选择要删除的壳图') : '选择壳图 · ' + CH[ctx.kind].noun;
+  $('framesHint').textContent = selMode ? '点壳图勾选，再点下方的“删除”。' : '点壳图即选用；右上角的按钮进入校准与预览。';
+  $('framesSel').textContent = selMode ? '取消' : '删除'; $('framesSel').hidden = !selMode && !names.length;
+  $('framesAll').hidden = !selMode; $('framesAll').textContent = names.length && selSet.size === names.length ? '全不选' : '全选';
+  $('selBar').hidden = !selMode; $('selDel').disabled = !selSet.size; $('selDelT').textContent = selSet.size ? '删除（' + selSet.size + '）' : '删除';
+  document.querySelector('#pg-frames .wrap').classList.toggle('selmode', selMode);
+  if (selMode) for (const card of $('frameGrid').querySelectorAll('.fcard')) card.setAttribute('aria-pressed', String(selSet.has(card.dataset.name)));
+}
+function renderFrames() {
+  const c = CH[ctx.kind], grid = $('frameGrid'); grid.textContent = '';
+  if (!selMode) grid.append(el('button', { class: 'addtile', onclick: openAdd }, icon('plus'), el('span', {}, '添加壳图')));
+  const sel = chFrame(c), shotSel = chFrame(CH.shot), recSel = chFrame(CH.rec);
+  for (const n of Object.keys(profiles)) {
+    const img = el('img', { alt: '' }); setThumb(img, n);
+    const typeTag = el('span', { class: 'tag' }, frameType(n) || '…');
+    const cal = selMode ? null : el('button', { class: 'fcal', 'aria-label': '校准 ' + n, onclick: e => { e.stopPropagation(); openCalib(n); } }, icon('sliders2'));
+    const chk = el('span', { class: 'fchk', 'aria-hidden': 'true' }, icon('check'));
+    grid.append(el('div', { class: 'fcard', role: 'button', tabindex: '0', 'data-name': n, 'aria-pressed': String(selMode ? selSet.has(n) : n === sel),
+      onclick: () => { if (selMode) { if (selSet.has(n)) selSet.delete(n); else selSet.add(n); refreshSel(); } else pickFrame(n); } },
+      el('div', { class: 'fimg' }, img), cal, chk,
+      el('div', { class: 'fb' }, el('div', { class: 'fn' }, n),
+        el('div', { class: 'tags' }, typeTag, n === shotSel ? el('span', { class: 'tag on' }, '截图') : null, n === recSel ? el('span', { class: 'tag on' }, '录屏') : null))));
+    if (!frameInfo[n] || !frameInfo[n].dp) ensureDetect(n).then(() => { typeTag.textContent = frameType(n) || ''; });
+    else typeTag.textContent = frameType(n) || '';
+  }
+  refreshSel();
+}
+async function pickFrame(name) {
+  const c = CH[ctx.kind];
+  cfg[c.frameKey] = name;
+  try { await saveConfig(false); } catch (e) { return; }
+  toast('已为' + c.noun + '选用“' + name + '”');
+  goBack(false);
+}
+
+/* ---------- sheets ---------- */
+function openSheet(title, build) {
+  $('sheetTitle').textContent = title;
+  const b = $('sheetBody'); b.textContent = ''; build(b);
+  $('sheetScrim').classList.add('open'); $('sheetScrim').setAttribute('aria-hidden', 'false');
+}
+function closeSheet() { $('sheetScrim').classList.remove('open'); $('sheetScrim').setAttribute('aria-hidden', 'true'); }
+const sheetOpen = () => $('sheetScrim').classList.contains('open');
+
+function openOptionSheet(c, k) {
+  const cur = chOpt(c, k);
+  openSheet(OPTS[k].title, body => {
+    for (const [v, t, d] of OPTS[k].list) {
+      body.append(el('button', { class: 'opt', role: 'radio', 'aria-checked': String(v === cur), onclick: async () => {
+        cfg[c.key + '_' + k] = v; closeSheet();
+        try { await saveConfig(false); renderCurrent(); renderHome(); toast('已保存'); } catch (e) { /* toast shown */ }
+      } }, el('span', { class: 'rd' }), el('span', {}, el('div', { class: 'ot' }, t), el('div', { class: 'od' }, d))));
+    }
+    const note = { res: '3D透视壳图的输出尺寸固定为壳图尺寸，不受这个选项影响。',
+      mode: '3D透视壳图固定为拉伸贴合屏幕四角，不受这个选项影响。',
+      rot: '3D透视壳图的方向由校准页“方向”决定，不受这个选项影响。' }[k];
+    if (note) body.append(el('p', { class: 'small muted', style: 'margin-top:6px' }, note));
+  });
+}
+
+const DIR_PRESETS = [['/sdcard/Pictures/Screenshots', 'Pictures/Screenshots'], ['/sdcard/DCIM/Screenshots', 'DCIM/Screenshots']];
+const REC_PRESETS = [['/sdcard/Pictures/Screen recordings', 'Pictures/Screen recordings'], ['/sdcard/DCIM/Screen recordings', 'DCIM/Screen recordings']];
+async function scanFolders(c, container, onPick) {
+  container.textContent = '';
+  let cmd;
+  if (c.key === 'shot') {
+    cmd = 'find /sdcard/Pictures /sdcard/DCIM -maxdepth 2 -type d \\( -iname "*screenshot*" -o -iname "*截屏*" -o -iname "*截图*" \\) 2>/dev/null | while read -r d; do ' +
+      'n=$(find "$d" -maxdepth 1 -type f \\( -iname "*.png" -o -iname "*.jpg" -o -iname "*.jpeg" \\) 2>/dev/null | wc -l); ' +
+      'l=$(ls -t "$d" 2>/dev/null | grep -iE "[.](png|jpe?g)$" | head -n 1); t=0; [ -n "$l" ] && t=$(stat -c %Y "$d/$l" 2>/dev/null); echo "$d|$n|$t"; done';
+  } else {
+    cmd = 'sh ' + q(MOD + '/recdirs.sh') + ' --scan | while read -r d; do ' +
+      'n=$(ls "$d" 2>/dev/null | grep -ic "[.]mp4$"); l=$(ls -t "$d" 2>/dev/null | grep -i "[.]mp4$" | head -n 1); t=0; [ -n "$l" ] && t=$(stat -c %Y "$d/$l" 2>/dev/null); echo "$d|$n|$t"; done';
+  }
+  const r = await exec(cmd);
+  const rows = r.stdout.split('\n').map(l => l.split('|')).filter(a => a.length === 3 && a[0]).map(a => ({ p: a[0], n: +a[1] || 0, t: +a[2] || 0 }));
+  rows.sort((a, b) => b.t - a.t);
+  if (!rows.length) { container.append(el('p', { class: 'small muted' }, '没有找到' + c.noun + '文件夹。请先' + (c.key === 'shot' ? '截一张图' : '录一段屏') + '，或手动填写路径。')); return; }
+  for (const x of rows) {
+    const when = x.t ? new Date(x.t * 1000).toLocaleString('zh-CN', { hour12: false }) : '暂无文件';
+    container.append(el('button', { class: 'dirrow', 'data-p': x.p, onclick: () => onPick(x.p) },
+      el('span', { class: 'dp' }, x.p), el('span', { class: 'dm' }, x.n + (c.key === 'shot' ? ' 张截图' : ' 个录屏') + '，最近：' + when)));
+  }
+}
+async function saveFolder(c, val) {
+  const v = normDir(val);
+  if (c.key === 'shot' && !/^\/sdcard\/[^\n]+$/.test(v)) { toast('截图文件夹必须位于 /sdcard/ 下'); return false; }
+  if (c.key === 'rec' && v && !/^\/sdcard\/[^\n]+$/.test(v)) { toast('录屏文件夹必须位于 /sdcard/ 下，或留空自动检测'); return false; }
+  if (v === normDir(cfg[c.dirKey])) return true;
+  if (v) {
+    const ex = await exec('[ -d ' + q(v) + ' ] && echo 1 || echo 0');
+    if (ex.stdout.trim() !== '1') {
+      const ok = await askConfirm('文件夹不存在', '“' + v + '”不存在，保存时将自动创建。请确认路径无误。', '继续保存');
+      if (!ok) return false;
+    }
+  }
+  cfg[c.dirKey] = v;
+  try { await saveConfig(true); } catch (e) { return false; }
+  toast(running ? '已保存，已切换监听文件夹' : '已保存，但监听服务未启动，请重启手机');
+  return true;
+}
+function openFolderSheet(c) {
+  let val = cfg[c.dirKey] || '';
+  const rec = c.key === 'rec', presets = rec ? REC_PRESETS : DIR_PRESETS;
+  openSheet(c.noun + '文件夹', body => {
+    body.append(el('p', { class: 'small muted' }, rec ? '模块监听这里的新录屏。留空时自动监听所有检测到的录屏文件夹；系统保存位置不同的，可自动检测或手动填写。' : '模块监听这里的新截图。不同品牌的系统保存位置不同，可自动检测或手动填写。'));
+    const chips = el('div', { class: 'chips', style: 'margin-top:10px' });
+    const input = el('input', { type: 'text', autocapitalize: 'off', autocomplete: 'off', spellcheck: 'false', placeholder: rec ? '留空 = 自动监听所有检测到的文件夹' : '/sdcard/Pictures/Screenshots', 'aria-label': c.noun + '文件夹路径' });
+    input.value = val;
+    const found = el('div');
+    const sync = () => {
+      for (const b of chips.children) b.setAttribute('aria-pressed', String(normDir(val) === b.dataset.p));
+      for (const b of found.children) if (b.dataset.p) b.setAttribute('aria-pressed', String(normDir(val) === b.dataset.p));
+    };
+    const pick = p => { val = p; input.value = p; sync(); };
+    for (const [p, label] of presets) chips.append(el('button', { class: 'chip', 'data-p': p, onclick: () => pick(p) }, label));
+    input.addEventListener('input', () => { val = input.value; sync(); });
+    const scanBtn = el('button', { class: 'btn', onclick: async () => { scanBtn.disabled = true; await scanFolders(c, found, pick); scanBtn.disabled = false; sync(); } }, '自动检测');
+    const row = el('div', { class: 'row', style: 'margin-top:10px' }, scanBtn);
+    body.append(chips, input, row, found);
+    body.append(el('div', { class: 'sheet-actions' },
+      el('button', { class: 'btn text', onclick: closeSheet }, '取消'),
+      el('button', { class: 'btn fill', onclick: async () => { if (await saveFolder(c, val)) { closeSheet(); renderCurrent(); renderHome(); } } }, '保存')));
+    sync();
+  });
+}
+
+/* ---------- dialog ---------- */
+let dlgResolve = null;
+function askConfirm(title, body, okText) {
+  return new Promise(resolve => {
+    if (dlgResolve) dlgResolve(false);
+    dlgResolve = resolve;
+    $('dlgTitle').textContent = title; $('dlgBody').textContent = body; $('dlgOk').textContent = okText || '确定';
+    $('scrim').classList.add('open'); $('scrim').setAttribute('aria-hidden', 'false');
+    $('app').setAttribute('inert', '');
+    setTimeout(() => $('dlgCancel').focus && $('dlgCancel').focus(), 60);
+  });
+}
+function closeConfirm(result) {
+  $('scrim').classList.remove('open'); $('scrim').setAttribute('aria-hidden', 'true');
+  $('app').removeAttribute('inert');
+  const r = dlgResolve; dlgResolve = null; if (r) r(result);
+}
+
+/* ---------- add frame (system picker + folder browser) ---------- */
+const ROOT = '/sdcard';
+let br = { dir: ROOT, items: [], busy: false, err: '', loaded: false };
+async function listDir(dir) {
+  br.busy = true; br.err = ''; renderAdd();
+  const r = await exec('cd ' + q(dir) + ' 2>/dev/null || { echo "!err"; exit 0; }\n' +
+    'for f in *; do [ -e "$f" ] || continue\n' +
+    ' if [ -d "$f" ]; then echo "d|0|0|0|$f"\n' +
+    ' else case "$f" in *.png|*.PNG)\n' +
+    '  set -- $(od -An -tu1 -j16 -N8 "$f" 2>/dev/null); w=0; h=0\n' +
+    '  [ $# -eq 8 ] && { w=$(( $1*16777216+$2*65536+$3*256+$4 )); h=$(( $5*16777216+$6*65536+$7*256+$8 )); }\n' +
+    '  echo "f|$w|$h|$(stat -c %s "$f" 2>/dev/null)|$f";; esac; fi; done');
+  br.busy = false; br.loaded = true;
+  if (r.stdout.startsWith('!err')) { br.err = '无法打开该文件夹'; renderAdd(); return; }
+  br.dir = dir;
+  br.items = r.stdout.split('\n').filter(l => /^[df]\|/.test(l)).map(l => {
+    const a = l.split('|'); return { dir: a[0] === 'd', w: +a[1], h: +a[2], size: +a[3], name: a.slice(4).join('|') };
+  }).sort((x, y) => (x.dir === y.dir ? x.name.localeCompare(y.name, 'zh') : x.dir ? -1 : 1));
+  renderAdd();
+}
+function goUp() { if (br.dir !== ROOT) listDir(br.dir.replace(/\/[^/]+$/, '') || ROOT); }
+function openAdd() { $('addPage').hidden = false; if (!br.loaded) listDir(br.dir); else renderAdd(); }
+function closeAdd() { $('addPage').hidden = true; }
+function renderAdd() {
+  const body = $('brBody'), fresh = $('freshBody');
+  body.textContent = ''; fresh.textContent = '';
+  const upAttrs = { class: 'btn', onclick: goUp }; if (br.dir === ROOT) upAttrs.disabled = '';
+  body.append(el('div', { class: 'row', style: 'margin:0 0 6px' },
+    el('button', upAttrs, '上一级'),
+    el('button', { class: 'btn', onclick: () => listDir(ROOT + '/Download') }, 'Download'),
+    el('button', { class: 'btn', onclick: () => listDir(ROOT + '/Pictures') }, 'Pictures')));
+  body.append(el('p', { class: 'small muted', style: 'overflow-wrap:anywhere;margin-bottom:6px' }, br.dir));
+  const list = el('div', { class: 'list' });
+  if (br.busy) list.append(el('p', { class: 'small muted' }, '正在读取…'));
+  else if (br.err) list.append(el('p', { class: 'warn' }, br.err));
+  else if (!br.items.length) list.append(el('p', { class: 'small muted' }, '该文件夹中没有 PNG 文件或子文件夹。'));
+  for (const it of br.items) {
+    if (it.dir) list.append(el('div', { class: 'item' }, el('button', { class: 'btn link', style: 'text-align:left;height:auto;padding:6px 0', onclick: () => listDir(br.dir + '/' + it.name) }, it.name + ' ›')));
+    else list.append(el('div', { class: 'item' },
+      el('span', { class: 'nm' }, it.name, el('span', { class: 'meta' }, (it.w ? it.w + '×' + it.h + '，' : '') + fmtSize(it.size))),
+      el('button', { class: 'btn', onclick: () => addFromPath(br.dir + '/' + it.name) }, '导入')));
+  }
+  body.append(list);
+  const used = new Set(Object.values(profiles).map(p => p.frame));
+  const fr = frames.filter(f => !used.has(f));
+  if (fr.length) {
+    fresh.append(el('p', { class: 'small muted', style: 'margin:12px 0 4px' }, '已导入但尚未配置的壳图'));
+    const l2 = el('div', { class: 'list' });
+    for (const f of fr) l2.append(el('div', { class: 'item' }, el('span', { class: 'nm' }, f), el('button', { class: 'btn', onclick: () => addFrame(f) }, '使用')));
+    fresh.append(l2);
+  }
+}
+function uniqueTarget(base) {
+  let target = base, i = 2;
+  while (frames.includes(target)) target = base.replace(/\.png$/i, '') + '_' + (i++) + '.png';
+  return target;
+}
+async function finishAdd(dest, target) {
+  const rs = dev || { w: 1080, h: 2340 };
+  const d = await exec(q(BIN) + ' detect ' + q(dest) + ' ' + rs.w + ' ' + rs.h);
+  if (d.errno !== 0) {
+    await exec('rm -f ' + q(dest));
+    toast('壳图无效：屏幕区域必须为透明，且被边框完全包围');
+    return false;
+  }
+  frames.push(target);
+  await addFrame(target);
+  return true;
+}
+async function addFromPath(path) {
+  const target = uniqueTarget(path.split('/').pop());
+  const dir = cfg.frames_dir.replace(/\/$/, ''), dest = dir + '/' + target;
+  toast('正在导入…');
+  const r = await exec('mkdir -p ' + q(dir) + ' && cp -f ' + q(path) + ' ' + q(dest));
+  if (r.errno !== 0) { toast('导入失败：' + (r.stderr || '').trim()); return false; }
+  return finishAdd(dest, target);
+}
+async function importFile(file) {
+  if (!file) return false;
+  if (file.size > 40 * 1048576) { toast('文件过大（上限 40 MB）'); return false; }
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  if (!isPng(bytes)) { toast('仅支持 PNG 格式的壳图'); return false; }
+  const target = uniqueTarget(file.name.replace(/[\/\\]/g, '_'));
+  const dir = cfg.frames_dir.replace(/\/$/, ''), dest = dir + '/' + target;
+  const mk = await exec('mkdir -p ' + q(dir) + ' && : > ' + q(dest));
+  if (mk.errno !== 0) { toast('无法创建壳图目录'); return false; }
+  const CHK = 60000;
+  for (let off = 0; off < bytes.length; off += CHK) {
+    const r = await exec('echo ' + b64(bytes.subarray(off, off + CHK)) + ' | base64 -d >> ' + q(dest));
+    if (r.errno !== 0) { await exec('rm -f ' + q(dest)); toast('导入失败：写入出错'); return false; }
+    toast('正在导入… ' + Math.min(100, Math.round((off + CHK) * 100 / bytes.length)) + '%');
+  }
+  return finishAdd(dest, target);
+}
+async function addFrame(file) {
+  let name = safeName(file), i = 2; while (profiles[name]) name = safeName(file) + '_' + i++;
+  profiles[name] = { frame: file, dx: '0', dy: '0' };
+  const c = CH[ctx.kind];
+  try {
+    await writeFile(DATA + '/profiles/' + name + '.conf', serializeProfile(profiles[name]));
+    cfg[c.frameKey] = name;
+    await saveConfig(false);
+  } catch (e) { return; }
+  closeAdd();
+  toast('壳图已添加，请确认屏幕位置，不对就微调后保存');
+  renderAll();
+  await openCalib(name);
+}
+
+/* ---------- calibration page ---------- */
+const CORNER_NAMES = ['左上角', '右上角', '右下角', '左下角'];
+let calMatched = false;
+/* How well the four corners agree with the corners detected from the frame's real screen edges.
+ * dev[i] is the distance in frame pixels; ok when every corner is within tol. */
+function quadFit(p, det) {
+  const qd = quadOf(p, det), ref = parseQuad(det && det.quad);
+  if (!qd || !ref) return null;
+  const tol = Math.max(3, 0.002 * Math.max(det.fw, det.fh));
+  const dev = [0, 1, 2, 3].map(i => Math.hypot(qd[i * 2] - ref[i * 2], qd[i * 2 + 1] - ref[i * 2 + 1]));
+  return { dev, tol, ok: dev.every(d => d <= tol) };
+}
+/* 位置 tab: does the content, after the horizontal/vertical offset, still sit exactly on the real screen edges? */
+function posFit(p, det) {
+  if (!det) return null;
+  const dx = parseInt(p.dx, 10) || 0, dy = parseInt(p.dy, 10) || 0, sc = scaleOf(p);
+  const tol = Math.max(3, 0.002 * Math.max(det.fw, det.fh));
+  let dev;
+  if (isPersp(p, det)) {
+    const qd = quadOf(p, det), ref = parseQuad(det.quad);
+    if (!qd || !ref) return null;
+    const eq = xformQuad(qd, dx, dy, 1, 0);
+    dev = Math.max(...[0, 1, 2, 3].map(i => Math.hypot(eq[i][0] - ref[i * 2], eq[i][1] - ref[i * 2 + 1])));
+  } else dev = Math.hypot(dx, dy);          // flat frame: the content rectangle is the screen rectangle shifted by dx, dy
+  const scaled = Math.abs(sc - 1) > 0.0005;
+  return { dev, tol, sc, scaled, ok: dev <= tol && !scaled };
+}
+const fitColor = (d, tol) => d <= tol ? '#2e9e5b' : d <= tol * 4 ? '#ff8a00' : '#e53935';
+const ORIENTS = [['', '自动'], ['0', '0°'], ['90', '90°'], ['180', '180°'], ['270', '270°']];
+const TOP_NAMES = ['上边', '右边', '下边', '左边'];
+const calP = () => profiles[calName];
+const calDet = () => (frameInfo[calName] && frameInfo[calName].detect) || null;
+function markDirty() { calDirty = true; $('calSave').disabled = false; }
+
+async function openCalib(name) {
+  calName = name; calDirty = false; calTab = 'pos'; selCorner = 0; calMatched = false;
+  $('calTitle').textContent = name; $('calSave').disabled = true;
+  $('stageHint').textContent = '正在检测屏幕区域…';
+  $('calTabs').textContent = '';
+  for (const id of ['pane-pos', 'pane-quad', 'pane-orient']) $(id).hidden = true;
+  go('calib');
+  const info = await ensureDetect(name, true);
+  if (calName !== name) return;
+  buildCalTabs(info);
+  if (info && info.detect) setCalTab('pos'); else syncCal();
+}
+function buildCalTabs(info) {
+  const tabs = $('calTabs'); tabs.textContent = '';
+  const p = calP(), det = info && info.detect;
+  const list = !det ? [] : isPersp(p, det) ? [['pos', '位置'], ['quad', '四角'], ['orient', '方向']] : [['pos', '位置']];
+  tabs.hidden = list.length < 2;
+  for (const [id, label] of list) tabs.append(el('button', { role: 'tab', 'data-t': id, 'aria-selected': 'false', onclick: () => setCalTab(id) }, label));
+}
+function setCalTab(t) {
+  calTab = t;
+  for (const b of $('calTabs').children) b.setAttribute('aria-selected', String(b.dataset.t === t));
+  for (const id of ['pos', 'quad', 'orient']) $('pane-' + id).hidden = id !== t;
+  syncCal(); schedulePreview();
+}
+function syncCal() {
+  const p = calP(), det = calDet(); if (!p) return;
+  const dx = parseInt(p.dx, 10) || 0, dy = parseInt(p.dy, 10) || 0, sc = Math.round(scaleOf(p) * 100);
+  $('sDx').value = dx; $('sDy').value = dy; $('sSc').value = sc;
+  $('vDx').textContent = sgn(dx); $('vDy').textContent = sgn(dy); $('vSc').textContent = sc + '%';
+  const rs = refSize(p);
+  const info = frameInfo[calName] || {};
+  if (!det) {
+    $('detectInfo').textContent = info.err || '正在检测…'; $('detectWarn').hidden = true; $('stageHint').textContent = info.err || '';
+    return;
+  }
+  const persp = isPersp(p, det);
+  $('detectInfo').textContent = persp ? '透视壳图，已检测到屏幕四角，壳图尺寸 ' + det.fw + '×' + det.fh : '屏幕区域 ' + det.w + '×' + det.h + '，起点 (' + det.x + ', ' + det.y + ')，壳图尺寸 ' + det.fw + '×' + det.fh;
+  const diff = Math.abs(det.aspect * rs.h / rs.w - 1), w = $('detectWarn');
+  if (!persp && diff > 0.01) { w.hidden = false; w.textContent = '壳图屏幕区域的宽高比与 ' + rs.w + '×' + rs.h + ' 相差 ' + (diff * 100).toFixed(1) + '%，套壳时将裁切部分边缘。'; } else w.hidden = true;
+  if (persp) {
+    const qd = quadOf(p, det);
+    const fit = quadFit(p, det);
+    for (const b of $('cornerChips').children) {
+      b.setAttribute('aria-pressed', String(+b.dataset.i === selCorner));
+      b.classList.toggle('fit', !!fit && fit.dev[+b.dataset.i] <= fit.tol);
+    }
+    const x = Math.round(qd[selCorner * 2]), y = Math.round(qd[selCorner * 2 + 1]);
+    $('cx').max = det.fw; $('cy').max = det.fh; $('cx').value = x; $('cy').value = y;
+    $('cxV').textContent = x; $('cyV').textContent = y;
+    $('quadInfo').textContent = parseQuad(p.quad) ? '当前使用手动校准的四角。' : '当前使用自动检测的四角。';
+    $('quadAuto').disabled = !parseQuad(p.quad);
+    for (const b of $('orientChips').children) b.setAttribute('aria-pressed', String(String(p.orient || '') === b.dataset.v));
+    $('topInfo').textContent = det.top >= 0
+      ? '检测到手机顶部在屏幕的' + TOP_NAMES[det.top] + '（依据前置摄像头开孔），选“自动”会据此摆正内容；横屏的截图和录屏会再逆时针转 90°。'
+      : '没有检测到前置摄像头开孔，选“自动”时手机横放的壳图按逆时针 90° 摆放（手机顶部在左边），请对照预览确认，不对就手动选择角度。';
+  }
+  const sh = $('stageHint'), fit2 = persp && calTab === 'quad' ? quadFit(p, det) : null, pf = calTab === 'pos' ? posFit(p, det) : null;
+  const matched = !!(fit2 && fit2.ok), posOk = !!(pf && pf.ok);
+  sh.classList.toggle('ok', matched || posOk);
+  if (persp && calTab === 'quad') {
+    sh.textContent = matched ? '✓ 四角已贴合屏幕' : '拖动圆点调整「' + CORNER_NAMES[selCorner] + '」' + (fit2 ? ' · 偏差 ' + Math.round(fit2.dev[selCorner]) + ' px' : '');
+  } else if (pf) {
+    sh.textContent = pf.ok ? '✓ 四边已贴合屏幕'
+      : pf.scaled ? '内容缩放到 ' + Math.round(pf.sc * 100) + '%，' + (pf.sc < 1 ? '四周会留出黑边' : '边缘会被裁掉一点')
+      : '与屏幕边缘相差 ' + Math.round(pf.dev) + ' px';
+  } else sh.textContent = '';
+  const matchedNow = matched || posOk;
+  if (matchedNow && !calMatched && calDirty) {            // just became aligned because of an edit: green flash + short buzz
+    const sb = $('stageBox'); sb.classList.add('fitflash'); setTimeout(() => sb.classList.remove('fitflash'), 650);
+    try { if (navigator.vibrate) navigator.vibrate(18); } catch (e) { /* ignore */ }
+  }
+  calMatched = matchedNow;
+}
+async function saveCal() {
+  if (!calName || !calDirty) return;
+  try {
+    await writeFile(DATA + '/profiles/' + calName + '.conf', serializeProfile(calP()));
+    calDirty = false; $('calSave').disabled = true; toast('已保存');
+  } catch (e) { toast('保存失败：' + e.message); }
+}
+function nudgePos(key, d) {
+  const p = calP();
+  if (key === 'scale') p.scale = (clamp(Math.round(scaleOf(p) * 100) + d, 80, 105) / 100).toFixed(2);
+  else p[key] = String(clamp((parseInt(p[key], 10) || 0) + d, -60, 60));
+  markDirty(); syncCal(); schedulePreview();
+}
+function setCornerXY(i, x, y) {
+  const p = calP(), det = calDet(); if (!p || !det) return;
+  const qd = quadOf(p, det).slice();
+  qd[i * 2] = clamp(x, 0, det.fw); qd[i * 2 + 1] = clamp(y, 0, det.fh);
+  p.quad = qd.map(n => Math.round(n * 10) / 10).join(',');
+  markDirty(); syncCal(); schedulePreview();
+}
+function orientK(p, det) {
+  if (['0', '90', '180', '270'].includes(String(p.orient))) return (+p.orient / 90) | 0;
+  if (det.top >= 0) return det.top;
+  return quadLandscape(quadOf(p, det)) ? 3 : 0;        // 3D frames: no rot setting, unknown top on a landscape quad turns counter-clockwise
+}
+
+/* preview: test card warped into the screen, frame on top */
+const tcCache = {};
+function testCard(w, h) {
+  const key = w + 'x' + h; if (tcCache[key]) return tcCache[key];
+  const W = 360, H = Math.max(120, Math.round(W * h / w));
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const g = c.getContext('2d');
+  g.fillStyle = '#f4f6fa'; g.fillRect(0, 0, W, H);
+  g.strokeStyle = '#c3cbe0'; g.lineWidth = 1;
+  for (let x = 0; x <= W; x += 30) { g.beginPath(); g.moveTo(x + .5, 0); g.lineTo(x + .5, H); g.stroke(); }
+  for (let y = 0; y <= H; y += 30) { g.beginPath(); g.moveTo(0, y + .5); g.lineTo(W, y + .5); g.stroke(); }
+  const sb = Math.round(H * 0.07);
+  g.fillStyle = '#3558d6'; g.fillRect(0, 0, W, sb);
+  g.fillStyle = '#fff'; g.font = 'bold 15px sans-serif'; g.textBaseline = 'middle'; g.textAlign = 'left';
+  g.fillText('09:41', 14, sb / 2);
+  g.fillRect(W - 50, sb / 2 - 6, 32, 12);
+  g.textAlign = 'center'; g.fillStyle = '#e6007e'; g.font = 'bold 40px sans-serif';
+  g.fillText('↑ 顶', W / 2, Math.round(H * 0.17));
+  g.fillStyle = '#e8503a'; g.fillRect(0, Math.round(H * 0.93), W, H - Math.round(H * 0.93));
+  g.fillStyle = '#fff'; g.font = 'bold 18px sans-serif'; g.fillText('底部', W / 2, Math.round(H * 0.965));
+  g.strokeStyle = '#e6007e'; g.lineWidth = 6; g.strokeRect(3, 3, W - 6, H - 6);
+  g.fillStyle = '#e6007e'; g.fillRect(0, sb, 34, 34);
+  g.fillStyle = '#0a8f5a'; g.fillRect(W - 34, H - 34 - Math.round(H * 0.07), 34, 34);
+  tcCache[key] = c; return c;
+}
+function drawWarp(g, src, dst) {
+  const sw = src.width, sh = src.height;
+  const sd = src.getContext('2d').getImageData(0, 0, sw, sh).data;
+  const Hm = homographyRect(sw, sh, dst); if (!Hm) return;
+  const G = inv3(Hm); if (!G) return;
+  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+  for (const [x, y] of dst) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
+  x0 = Math.max(0, Math.floor(x0)); y0 = Math.max(0, Math.floor(y0));
+  x1 = Math.min(g.canvas.width - 1, Math.ceil(x1)); y1 = Math.min(g.canvas.height - 1, Math.ceil(y1));
+  const bw = x1 - x0 + 1, bh = y1 - y0 + 1; if (bw < 2 || bh < 2) return;
+  const out = g.createImageData(bw, bh), od = out.data;
+  for (let y = 0; y < bh; y++) {
+    for (let x = 0; x < bw; x++) {
+      const X = x0 + x + 0.5, Y = y0 + y + 0.5;
+      const w = G[6] * X + G[7] * Y + G[8];
+      const u = (G[0] * X + G[1] * Y + G[2]) / w, v = (G[3] * X + G[4] * Y + G[5]) / w;
+      if (u < 0 || v < 0 || u >= sw || v >= sh) continue;
+      const fu = u - 0.5, fv = v - 0.5, ax = fu - Math.floor(fu), ay = fv - Math.floor(fv);
+      const ix = Math.max(0, Math.floor(fu)), iy = Math.max(0, Math.floor(fv));
+      const ix1 = Math.min(sw - 1, ix + 1), iy1 = Math.min(sh - 1, iy + 1), o = (y * bw + x) * 4;
+      for (let c = 0; c < 3; c++) {
+        const a = sd[(iy * sw + ix) * 4 + c], b = sd[(iy * sw + ix1) * 4 + c], cc = sd[(iy1 * sw + ix) * 4 + c], d = sd[(iy1 * sw + ix1) * 4 + c];
+        od[o + c] = (a * (1 - ax) + b * ax) * (1 - ay) + (cc * (1 - ax) + d * ax) * ay;
+      }
+      od[o + 3] = 255;
+    }
+  }
+  const t = document.createElement('canvas'); t.width = bw; t.height = bh;
+  t.getContext('2d').putImageData(out, 0, 0);
+  g.drawImage(t, x0, y0);
+}
+let rafPending = false;
+function schedulePreview() { if (rafPending) return; rafPending = true; requestAnimationFrame(() => { rafPending = false; drawPreview(); }); }
+function drawPreview() {
+  const info = frameInfo[calName], cv = $('cv');
+  if (!info || !info.img || !info.detect || stack[stack.length - 1] !== 'calib') return;
+  const p = calP(), img = info.img, det = info.detect, W = img.naturalWidth, H = img.naturalHeight;
+  const box = $('stageBox'), bw = box.clientWidth || 320, bh = (box.clientHeight || 360) - 18;
+  const k = Math.max(0.02, Math.min(bw / W, bh / H));
+  const cw = Math.max(2, Math.round(W * k)), ch = Math.max(2, Math.round(H * k));
+  const px = Math.min(window.devicePixelRatio || 1, 2, 760 / cw);
+  cv.style.width = cw + 'px'; cv.style.height = ch + 'px';
+  cv.width = Math.max(2, Math.round(cw * px)); cv.height = Math.max(2, Math.round(ch * px));
+  const S = cv.width / W, g = cv.getContext('2d');
+  g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, cv.width, cv.height);
+  const dx = parseInt(p.dx, 10) || 0, dy = parseInt(p.dy, 10) || 0, sc = scaleOf(p), rs = refSize(p);
+  const guides = $('guides').checked, persp = isPersp(p, det);
+  let handles = null;
+  if (persp) {
+    const qd = quadOf(p, det);
+    const full = xformQuad(qd, dx, dy, 1, 1.5), t = xformQuad(qd, dx, dy, sc, 1.5);
+    g.fillStyle = '#000'; g.beginPath(); full.forEach(([x, y], i) => (i ? g.lineTo(x * S, y * S) : g.moveTo(x * S, y * S))); g.closePath(); g.fill();
+    const kq = orientK(p, det);
+    drawWarp(g, testCard(rs.w, rs.h), [0, 1, 2, 3].map(i => t[(i + kq) % 4]).map(([x, y]) => [x * S, y * S]));
+    handles = [0, 1, 2, 3].map(i => [qd[i * 2] + dx, qd[i * 2 + 1] + dy]);
+  } else {
+    g.setTransform(S, 0, 0, S, 0, 0);
+    const rx = det.x + dx, ry = det.y + dy;
+    g.fillStyle = '#000'; g.fillRect(rx, ry, det.w, det.h);
+    const tw = det.w * sc, th = det.h * sc, tx = rx + (det.w - tw) / 2, ty = ry + (det.h - th) / 2;
+    const pat = testCard(rs.w, rs.h), fit = Math.max(tw / pat.width, th / pat.height);
+    g.save(); g.beginPath(); g.rect(tx, ty, tw, th); g.clip();
+    g.drawImage(pat, tx + (tw - pat.width * fit) / 2, ty + (th - pat.height * fit) / 2, pat.width * fit, pat.height * fit);
+    g.restore();
+  }
+  g.setTransform(S, 0, 0, S, 0, 0);
+  g.drawImage(img, 0, 0, W, H);
+  const fit = persp && calTab === 'quad' ? quadFit(p, det) : null, matched = !!(fit && fit.ok);
+  if (matched) {                                        // aligned: tint the screen green
+    g.fillStyle = 'rgba(46,158,91,.28)'; g.beginPath();
+    handles.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); g.fill();
+  }
+  if (guides || (persp && calTab === 'quad')) {
+    g.strokeStyle = matched ? '#2e9e5b' : '#ff8a00'; g.lineWidth = (matched ? 3 : 2) / S * (px || 1); g.setLineDash(matched ? [] : [8 / S * px, 6 / S * px]);
+    g.beginPath();
+    if (persp) handles.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))), g.closePath();
+    else g.rect(det.x, det.y, det.w, det.h);
+    g.stroke(); g.setLineDash([]);
+  }
+  if (persp && calTab === 'quad') {
+    handles.forEach(([x, y], i) => {
+      g.fillStyle = fit ? fitColor(fit.dev[i], fit.tol) : (i === selCorner ? '#e53935' : '#ff8a00');
+      g.beginPath(); g.arc(x, y, (i === selCorner ? 14 : 9) / S * px, 0, 7); g.fill();
+      if (i === selCorner) { g.strokeStyle = '#fff'; g.lineWidth = 2.5 / S * px; g.stroke(); }
+    });
+  }
+}
+function bindStage() {
+  const cv = $('cv'); let drag = -1;
+  const toFrame = e => {
+    const r = cv.getBoundingClientRect(), img = frameInfo[calName].img;
+    return [(e.clientX - r.left) / r.width * img.naturalWidth, (e.clientY - r.top) / r.height * img.naturalHeight, r.width / img.naturalWidth];
+  };
+  cv.addEventListener('pointerdown', e => {
+    const info = frameInfo[calName], p = calP();
+    if (calTab !== 'quad' || !info || !info.detect || !info.img || !isPersp(p, info.detect)) return;
+    const [fx, fy, k] = toFrame(e), qd = quadOf(p, info.detect), dx = parseInt(p.dx, 10) || 0, dy = parseInt(p.dy, 10) || 0;
+    let best = -1, bd = 1e18;
+    for (let i = 0; i < 4; i++) { const d = Math.hypot(qd[i * 2] + dx - fx, qd[i * 2 + 1] + dy - fy); if (d < bd) { bd = d; best = i; } }
+    if (bd * k > 48) return;
+    drag = best; selCorner = best;
+    try { cv.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+    syncCal(); schedulePreview(); e.preventDefault();
+  });
+  cv.addEventListener('pointermove', e => {
+    if (drag < 0) return;
+    const p = calP(), [fx, fy] = toFrame(e);
+    setCornerXY(drag, fx - (parseInt(p.dx, 10) || 0), fy - (parseInt(p.dy, 10) || 0));
+  });
+  const end = () => { drag = -1; };
+  cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
+}
+/* Delete frames (multi-select on the frame picker page). A channel that used a deleted frame switches to the frame
+ * the other channel has selected; if the other channel has none selected (or lost it too) it is left empty = automatic. */
+async function deleteFrames(names) {
+  names = names.filter(n => profiles[n]); if (!names.length) return;
+  const quoted = names.length <= 3 ? names.map(n => '“' + n + '”').join('') : '所选的 ' + names.length + ' 套壳图';
+  const ok = await askConfirm(names.length > 1 ? '删除 ' + names.length + ' 套壳图？' : '删除这套壳图？',
+    '将删除' + quoted + '及其在模块中保存的壳图副本，不会影响你选择的原文件。截图或录屏正在使用被删壳图的，会改用另一边当前选定的壳图；另一边没有选定壳图时改为自动匹配。', '删除');
+  if (!ok) return;
+  const shotKey = CH.shot.frameKey, recKey = CH.rec.frameKey, shotSel = cfg[shotKey] || '', recSel = cfg[recKey] || '';
+  const done = new Set();
+  for (const name of names) {
+    const gone = profiles[name];
+    const r = await exec('rm -f ' + q(DATA + '/profiles/' + name + '.conf'));
+    if (r.errno !== 0) continue;
+    if (gone && gone.frame[0] !== '/') {
+      await exec('rm -f ' + q(framePath(gone)) + ' ' + q(MOD + '/webroot/cache/f_' + hash(gone.frame) + '.png'));
+      frames = frames.filter(f => f !== gone.frame);
+    }
+    done.add(name);
+  }
+  if (!done.size) { toast('删除失败'); return; }
+  const keep = n => (n && profiles[n] && !done.has(n)) ? n : '';
+  cfg[shotKey] = done.has(shotSel) ? keep(recSel) : shotSel;
+  cfg[recKey] = done.has(recSel) ? keep(shotSel) : recSel;
+  if (done.has(cfg.active)) cfg.active = '';
+  for (const n of done) { delete profiles[n]; delete frameInfo[n]; }
+  try { await saveConfig(false); } catch (e) { /* toast shown */ }
+  selMode = false; selSet.clear(); renderFrames();
+  toast(done.size < names.length ? '已删除 ' + done.size + ' 套，' + (names.length - done.size) + ' 套删除失败' : '已删除 ' + done.size + ' 套壳图');
+}
+
+/* ---------- FFmpeg status ---------- */
+function showFFStatus() {
+  if (ffState === 1) { toast('FFmpeg 正常，录屏套壳可用'); return; }
+  const why = ffState === 2 ? 'FFmpeg 文件存在，但无法运行（可能缺少依赖库或与系统不兼容）。'
+    : ffState === 3 ? 'FFmpeg 能运行，但缺少 libx264 视频编码器。' : '没有找到 FFmpeg。';
+  openSheet('FFmpeg 状态', body => body.append(
+    el('p', { class: 'field-d', style: 'margin:0 0 8px' }, why),
+    el('p', { class: 'field-d', style: 'margin:0 0 14px' }, '录屏套壳依赖 FFmpeg 处理视频，现在录屏不会被处理，截图套壳不受影响。请重新刷入完整的模块 zip；自行构建时，需要在 Termux 里完成 FFmpeg 打包（sh build_module.sh）。'),
+    el('button', { class: 'btn fill', style: 'width:100%', onclick: closeSheet }, '知道了')));
+}
+
+/* ---------- screen resolution page (global) ---------- */
+let resManualUI = false;
+function openRes() { resManualUI = !!cfg.screen_res; renderRes(); go('res'); }
+function renderRes() {
+  const sr = screenRes(), manual = resManualUI || sr.manual;
+  const chips = $('resChips'); chips.textContent = '';
+  for (const [v, t] of [['auto', '自动匹配'], ['manual', '手动输入']])
+    chips.append(el('button', { class: 'chip', 'aria-pressed': String((v === 'manual') === manual), onclick: () => (v === 'auto' ? setResAuto() : setResManual()) }, t));
+  $('resAutoInfo').hidden = manual;
+  $('resAutoInfo').textContent = dev ? '本机分辨率 ' + dev.w + '×' + dev.h + '（自动检测）。截图按它匹配，一般不用改。' : '无法读取本机分辨率，这时不再按分辨率筛选截图。';
+  $('resManual').hidden = !manual;
+  if (manual) { $('resW').value = sr.w; $('resH').value = sr.h; checkResWarn(); }
+}
+async function setResAuto() {
+  resManualUI = false;
+  if (cfg.screen_res) { cfg.screen_res = ''; try { await saveConfig(false); toast('已切换为自动匹配'); } catch (e) { /* toast shown */ } }
+  renderRes(); renderHome();
+}
+function setResManual() { resManualUI = true; renderRes(); }
+function resInput() { return { w: parseInt($('resW').value, 10), h: parseInt($('resH').value, 10) }; }
+function checkResWarn() {
+  const { w, h } = resInput(), warn = $('resWarn');
+  if (!dev || !(w > 0 && h > 0)) { warn.hidden = true; return; }
+  const same = (w === dev.w && h === dev.h) || (w === dev.h && h === dev.w);
+  warn.hidden = same;
+  if (!same) warn.textContent = '与本机分辨率 ' + dev.w + '×' + dev.h + ' 不一致：只有 ' + w + '×' + h + ' 的截图会被套壳，本机的全屏截图会被跳过。';
+}
+async function saveResManual() {
+  const { w, h } = resInput();
+  if (!(w >= 100 && w <= 20000 && h >= 100 && h <= 20000)) { toast('请填写有效的宽和高（100–20000）'); return; }
+  cfg.screen_res = w + 'x' + h;
+  try { await saveConfig(false); toast('已保存'); } catch (e) { /* toast shown */ }
+  renderRes(); renderHome();
+}
+async function openUrl(url) {
+  try { const r = await exec('am start --user 0 -a android.intent.action.VIEW -d ' + q(url) + ' >/dev/null 2>&1'); if (r.errno === 0) return; } catch (e) { /* fall through */ }
+  try { window.open(url, '_blank'); } catch (e) { toast('无法打开链接'); }
+}
+
+/* ---------- menu / about / log ---------- */
+function setMenu(open) { $('menu').hidden = !open; $('menuBtn').setAttribute('aria-expanded', String(open)); }
+function openAbout() { setMenu(false); $('about').hidden = false; }
+function closeAbout() { $('about').hidden = true; }
+async function loadLog() {
+  const r = await exec('tail -n 120 ' + q(DATA + '/log.txt') + ' 2>/dev/null');
+  $('logText').textContent = r.stdout.trim() || '暂无日志。';
+  const pg = $('logPage'); pg.scrollTop = pg.scrollHeight;
+}
+async function openLog() { setMenu(false); $('logPage').hidden = false; await loadLog(); }
+function closeLog() { $('logPage').hidden = true; }
+
+/* ---------- init ---------- */
+function bindCalibration() {
+  $('calSave').addEventListener('click', saveCal);
+  $('sDx').addEventListener('input', e => { calP().dx = e.target.value; markDirty(); syncCal(); schedulePreview(); });
+  $('sDy').addEventListener('input', e => { calP().dy = e.target.value; markDirty(); syncCal(); schedulePreview(); });
+  $('sSc').addEventListener('input', e => { calP().scale = (clamp(+e.target.value, 80, 105) / 100).toFixed(2); markDirty(); syncCal(); schedulePreview(); });
+  for (const b of document.querySelectorAll('.pstep')) b.addEventListener('click', () => nudgePos(b.dataset.p, +b.dataset.d));
+  $('guides').addEventListener('change', schedulePreview);
+  $('resetPos').addEventListener('click', () => { const p = calP(); p.dx = '0'; p.dy = '0'; p.scale = '1'; markDirty(); syncCal(); schedulePreview(); });
+  const cc = $('cornerChips');
+  CORNER_NAMES.forEach((n, i) => cc.append(el('button', { class: 'chip', 'data-i': String(i), onclick: () => { selCorner = i; syncCal(); schedulePreview(); } }, n)));
+  const oc = $('orientChips');
+  for (const [v, label] of ORIENTS) oc.append(el('button', { class: 'chip', 'data-v': v, onclick: () => { calP().orient = v; markDirty(); syncCal(); schedulePreview(); } }, label));
+  $('cx').addEventListener('input', e => { const p = calP(), qd = quadOf(p, calDet()); setCornerXY(selCorner, +e.target.value, qd[selCorner * 2 + 1]); });
+  $('cy').addEventListener('input', e => { const p = calP(), qd = quadOf(p, calDet()); setCornerXY(selCorner, qd[selCorner * 2], +e.target.value); });
+  for (const b of document.querySelectorAll('.qstep')) b.addEventListener('click', () => {
+    const qd = quadOf(calP(), calDet()); if (!qd) return;
+    const x = qd[selCorner * 2], y = qd[selCorner * 2 + 1];
+    if (b.dataset.c === 'x') setCornerXY(selCorner, x + +b.dataset.d, y); else setCornerXY(selCorner, x, y + +b.dataset.d);
+  });
+  $('quadAuto').addEventListener('click', () => { calP().quad = ''; markDirty(); syncCal(); schedulePreview(); });
+  $('framesSel').addEventListener('click', () => setSelMode(!selMode));
+  $('framesAll').addEventListener('click', () => { const all = Object.keys(profiles); if (selSet.size === all.length) selSet.clear(); else all.forEach(n => selSet.add(n)); refreshSel(); });
+  $('selDel').addEventListener('click', () => deleteFrames([...selSet]));
+  bindStage();
+}
+function init() {
+  $('menuBtn').addEventListener('click', e => { e.stopPropagation(); setMenu($('menu').hidden); });
+  $('menuAbout').addEventListener('click', openAbout);
+  $('menuLog').addEventListener('click', openLog);
+  $('aboutBack').addEventListener('click', closeAbout);
+  $('logBack').addEventListener('click', closeLog);
+  $('logRefresh').addEventListener('click', loadLog);
+  $('addBack').addEventListener('click', closeAdd);
+  for (const b of document.querySelectorAll('.backbtn')) b.addEventListener('click', uiBack);
+  document.addEventListener('click', () => setMenu(false));
+  window.addEventListener('popstate', () => { if (stack.length > 1) goBack(true); });
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    setMenu(false);
+    if (dlgResolve) closeConfirm(false); else if (sheetOpen()) closeSheet(); else if (!$('addPage').hidden) closeAdd();
+    else if (!$('logPage').hidden) closeLog(); else if (!$('about').hidden) closeAbout(); else uiBack();
+  });
+  if (typeof ksu === 'undefined') { showBanner('请在支持 WebUI 的模块管理器（如 KernelSU、APatch）中打开此页面。'); $('status').textContent = ''; return; }
+  $('homeAdd').addEventListener('click', () => { ctx.kind = 'shot'; openAdd(); });
+  $('chanSwitch').addEventListener('click', () => toggleChannel(CH[ctx.kind]));
+  $('chanSwap').addEventListener('click', () => openFrames(ctx.kind));
+  $('chanCal').addEventListener('click', () => { const n = chFrame(CH[ctx.kind]); if (!n) { toast('请先添加或选择一套壳图'); return; } openCalib(n); });
+  $('rowDir').addEventListener('click', () => openFolderSheet(CH[ctx.kind]));
+  $('rowRes').addEventListener('click', () => openChanOpt('res'));
+  $('rowMode').addEventListener('click', () => openChanOpt('mode'));
+  $('rowRot').addEventListener('click', () => openChanOpt('rot'));
+  $('rowScreen').addEventListener('click', openRes);
+  $('ffStatus').addEventListener('click', showFFStatus);
+  $('resW').addEventListener('input', checkResWarn); $('resH').addEventListener('input', checkResWarn);
+  $('resDev').addEventListener('click', () => { if (!dev) { toast('无法读取本机分辨率'); return; } $('resW').value = dev.w; $('resH').value = dev.h; checkResWarn(); });
+  $('resSave').addEventListener('click', saveResManual);
+  $('abGit').addEventListener('click', e => { e.preventDefault(); openUrl(e.currentTarget.href); });
+  $('sheetScrim').addEventListener('click', e => { if (e.target === $('sheetScrim')) closeSheet(); });
+  $('dlgOk').addEventListener('click', () => closeConfirm(true));
+  $('dlgCancel').addEventListener('click', () => closeConfirm(false));
+  $('scrim').addEventListener('click', e => { if (e.target === $('scrim')) closeConfirm(false); });
+  $('pickBtn').addEventListener('click', () => $('picker').click());
+  $('picker').addEventListener('change', async e => { const f = e.target.files && e.target.files[0]; e.target.value = ''; await importFile(f); });
+  bindCalibration();
+  window.addEventListener('resize', schedulePreview);
+  refresh().catch(e => { showBanner('读取失败：' + e.message); });
+  setInterval(refreshRecent, 2500);
+}
+
+window.__sf = { quadFit, deleteFrames, setSelMode, parseLog, serializeConfig, serializeProfile, parseQuad, homographyRect, inv3, xformQuad, quadLandscape, parseKV, parseSections, q, unq,
+  state: () => ({ cfg, profiles, stack: stack.slice(), ctx, calName, calDirty, calTab }),
+  chFrame, chOpt, go, goBack, openChan, openFrames, openCalib, renderAll, refresh };
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();
+</script>
+</body>
+</html>
