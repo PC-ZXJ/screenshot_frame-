@@ -114,7 +114,3 @@ frame vprep ...                  # 录屏用，参数见 frame.c 文件头注释
 - LodePNG（zlib 许可）：PNG 编解码
 - stb_image、stb_image_write（公有领域）：JPG 编解码
 - FFmpeg（LGPL / GPL，取自 Termux 软件包，仅随构建出的模块打包，不在本仓库中）
-
-## 作者
-
-酷安 @裤子里又硬又烫原来是我的手机 · GitHub [@PC-ZXJ](https://github.com/PC-ZXJ)
