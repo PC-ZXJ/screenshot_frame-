@@ -62,7 +62,7 @@ pkg install clang curl zip
 sh build_module.sh
 ```
 
-首次构建需要联网，会自动完成这些事：下载 stb 头文件、安装 ffmpeg 和 binutils（`pkg install`）、把 ffmpeg 打包进 `module/bin/ffmpeg/`。生成的 `screenshot_frame_<版本>.zip` 是自包含的，可直接在管理器里刷入，装完不依赖 Termux。版本号在 `module/module.prop` 里修改。
+首次构建需要联网，会自动完成这些事：下载 stb 头文件、安装 ffmpeg 和 binutils（`pkg install`）、把 ffmpeg 打包进 `module/bin/ffmpeg/`。生成的 `screenshot_frame_<版本>.zip` 是自包含的，可直接在管理器里刷入，装完不依赖 Termux。
 
 
 ## 配置文件
