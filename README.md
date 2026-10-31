@@ -64,6 +64,7 @@ sh build_module.sh
 
 首次构建需要联网，会自动完成这些事：下载 stb 头文件、安装 ffmpeg 和 binutils（`pkg install`）、把 ffmpeg 打包进 `module/bin/ffmpeg/`。生成的 `screenshot_frame_<版本>.zip` 是自包含的，可直接在管理器里刷入，装完不依赖 Termux。版本号在 `module/module.prop` 里修改。
 
+
 ## 配置文件
 
 数据目录是 `/data/adb/screenshot_frame`：`config`（全局设置）、`profiles/<名称>.conf`（每套壳图的校准）、`frames/`（壳图文件）、`bin/`（核心程序和 FFmpeg 的工作副本）、`log.txt`（运行日志）。升级模块会保留这些数据，卸载模块不会自动清理。
